@@ -2,40 +2,97 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>シチュエーションボイス TEST</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Audio Novel Test</title>
+
 <style>
+
 body {
-    font-family: sans-serif;
-    line-height: 2;
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 20px;
+    margin: 0;
+    background: #111;
+    color: #eee;
+    font-family: serif;
+    line-height: 2.2;
 }
+
+.story {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 50px 25px;
+}
+
 .voice {
     cursor: pointer;
     text-decoration: underline;
+    text-decoration-color: #888;
+    text-underline-offset: 6px;
+    transition: 0.2s;
 }
+
 .voice:hover {
+    opacity: 0.7;
+}
+
+.voice.playing {
     opacity: 0.6;
 }
+
 </style>
 </head>
+
+
 <body>
-<p>男は言った。</p>
+
+<div class="story">
+
 <p>
-<span class="voice" onclick="playVoice()">
+男は言った。
+</p>
+
+<p>
+<span class="voice" onclick="playVoice(this)">
 「僕に溺れろ」
 </span>
 </p>
-<p>私は高揚感に包まれる。</p>
-<audio id="voiceAudio" src="oborelo.mp3"></audio>
+
+<p>
+私は高揚感に包まれる。
+</p>
+
+</div>
+
+
+<audio id="voiceAudio"></audio>
+
+
 <script>
-function playVoice() {
+
+function playVoice(element) {
+
     const audio = document.getElementById("voiceAudio");
+
+    document.querySelectorAll(".voice").forEach(function(el) {
+        el.classList.remove("playing");
+    });
+
+    element.classList.add("playing");
+
+    audio.src = "oborelo.mp3";
+
     audio.currentTime = 0;
+
     audio.play();
+
+    audio.onended = function() {
+        element.classList.remove("playing");
+    };
+
 }
+
 </script>
+
 </body>
 </html>
+
 
