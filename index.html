@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>シチュエーションボイス TEST</title>
+<style>
+body {
+    font-family: sans-serif;
+    line-height: 2;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+}
+.voice {
+    cursor: pointer;
+    text-decoration: underline;
+}
+.voice:hover {
+    opacity: 0.6;
+}
+</style>
+</head>
+<body>
+<p>男は言った。</p>
+<p>
+<span class="voice" onclick="playVoice()">
+「僕に溺れろ」
+</span>
+</p>
+<p>私は高揚感に包まれる。</p>
+<audio id="voiceAudio" src="oborelo.mp3"></audio>
+<script>
+function playVoice() {
+    const audio = document.getElementById("voiceAudio");
+    audio.currentTime = 0;
+    audio.play();
+}
+</script>
+</body>
+</html>
+
