@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -9,36 +11,37 @@
 <style>
 
 body {
-    margin: 0;
-    background: #111;
-    color: #eee;
-    font-family: serif;
-    line-height: 2.2;
+margin: 0;
+background: #111;
+color: #eee;
+font-family: serif;
+line-height: 2.2;
 }
 
 .story {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 50px 25px;
+max-width: 680px;
+margin: 0 auto;
+padding: 50px 25px;
 }
 
 .voice {
-    cursor: pointer;
-    text-decoration: underline;
-    text-decoration-color: #888;
-    text-underline-offset: 6px;
-    transition: 0.2s;
+cursor: pointer;
+text-decoration: underline;
+text-decoration-color: #888;
+text-underline-offset: 6px;
+transition: 0.2s;
 }
 
 .voice:hover {
-    opacity: 0.7;
+opacity: 0.7;
 }
 
 .voice.playing {
-    opacity: 0.6;
+opacity: 0.5;
 }
 
 </style>
+
 </head>
 
 
@@ -47,11 +50,43 @@ body {
 <div class="story">
 
 <p>
-男は言った。
+雨が静かに降っていた。
 </p>
 
 <p>
-<span class="voice" onclick="playVoice(this)">
+男は私を見つめた。
+</p>
+
+<p>
+<span class="voice" data-audio="doushita.mp3">
+「どうしたの？」
+</span>
+</p>
+
+<p>
+私は何も答えなかった。
+</p>
+
+<p>
+彼はゆっくりとこちらへ近づいた。
+</p>
+
+<p>
+<span class="voice" data-audio="kochi.mp3">
+「こっちへおいで」
+</span>
+</p>
+
+<p>
+私は動けなかった。
+</p>
+
+<p>
+彼は小さく笑った。
+</p>
+
+<p>
+<span class="voice" data-audio="oborelo.mp3">
 「僕に溺れろ」
 </span>
 </p>
@@ -68,31 +103,42 @@ body {
 
 <script>
 
-function playVoice(element) {
+const audio = document.getElementById("voiceAudio");
 
-    const audio = document.getElementById("voiceAudio");
+const voices = document.querySelectorAll(".voice");
 
-    document.querySelectorAll(".voice").forEach(function(el) {
-        el.classList.remove("playing");
-    });
 
-    element.classList.add("playing");
+voices.forEach(function(voice) {
 
-    audio.src = "oborelo.mp3";
+voice.addEventListener("click", function() {
 
-    audio.currentTime = 0;
+voices.forEach(function(v) {
+v.classList.remove("playing");
+});
 
-    audio.play();
+voice.classList.add("playing");
 
-    audio.onended = function() {
-        element.classList.remove("playing");
-    };
+audio.src = voice.dataset.audio;
 
-}
+audio.currentTime = 0;
+
+audio.play();
+
+});
+
+});
+
+
+audio.addEventListener("ended", function() {
+
+voices.forEach(function(v) {
+v.classList.remove("playing");
+});
+
+});
 
 </script>
 
 </body>
+
 </html>
-
-
