@@ -11,33 +11,37 @@
 <style>
 
 body {
-margin: 0;
-background: #111;
-color: #eee;
-font-family: serif;
-line-height: 2.2;
+    margin: 0;
+    background: #111;
+    color: #eee;
+    font-family: serif;
+    line-height: 2.2;
 }
 
 .story {
-max-width: 680px;
-margin: 0 auto;
-padding: 50px 25px;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 50px 25px;
 }
 
 .voice {
-cursor: pointer;
-text-decoration: underline;
-text-decoration-color: #888;
-text-underline-offset: 6px;
-transition: 0.2s;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: #888;
+    text-underline-offset: 6px;
+    transition: 0.2s;
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 2px 0;
 }
 
 .voice:hover {
-opacity: 0.7;
+    opacity: 0.7;
 }
 
 .voice.playing {
-opacity: 0.5;
+    opacity: 0.5;
+    text-decoration-color: #fff;
 }
 
 </style>
@@ -49,6 +53,10 @@ opacity: 0.5;
 
 <div class="story">
 
+<button id="bgmButton">BGMを再生</button>
+
+<section class="scene" data-bgm="bgm/scene01.mp3">
+
 <p>
 雨が静かに降っていた。
 </p>
@@ -58,7 +66,8 @@ opacity: 0.5;
 </p>
 
 <p>
-<span class="voice" data-audio="doushita.mp3">
+<span class="voice" data-audio="audio/doushita.mp3"
+>
 「どうしたの？」
 </span>
 </p>
@@ -68,25 +77,22 @@ opacity: 0.5;
 </p>
 
 <p>
-彼はゆっくりとこちらへ近づいた。
-</p>
-
-<p>
-<span class="voice" data-audio="kochi.mp3">
+<span class="voice" data-audio="audio/kochi.mp3">
 「こっちへおいで」
 </span>
 </p>
 
+</section>
+
+
+<section class="scene" data-bgm="bgm/scene02.mp3">
+
 <p>
-私は動けなかった。
+私はゆっくりと部屋へ入った。
 </p>
 
 <p>
-彼は小さく笑った。
-</p>
-
-<p>
-<span class="voice" data-audio="oborelo.mp3">
+<span class="voice" data-audio="audio/oborelo.mp3">
 「僕に溺れろ」
 </span>
 </p>
@@ -95,10 +101,14 @@ opacity: 0.5;
 私は高揚感に包まれる。
 </p>
 
+</section>
+
 </div>
 
 
 <audio id="voiceAudio"></audio>
+<audio id="bgmAudio" src="bgm/scene01.mp3" loop></audio>
+
 
 
 <script>
@@ -110,32 +120,137 @@ const voices = document.querySelectorAll(".voice");
 
 voices.forEach(function(voice) {
 
-voice.addEventListener("click", function() {
+    voice.addEventListener("click", function() {
 
-voices.forEach(function(v) {
-v.classList.remove("playing");
-});
+        voices.forEach(function(v) {
+            v.classList.remove("playing");
+        });
 
-voice.classList.add("playing");
+        voice.classList.add("playing");
 
-audio.src = voice.dataset.audio;
+        audio.src = voice.dataset.audio;
 
-audio.currentTime = 0;
+        audio.currentTime = 0;
 
-audio.play();
+        audio.play();
 
-});
+    });
 
 });
 
 
 audio.addEventListener("ended", function() {
 
-voices.forEach(function(v) {
-v.classList.remove("playing");
-});
+    voices.forEach(function(v) {
+        v.classList.remove("playing");
+    });
 
 });
+
+
+const bgm = document.getElementById("bgmAudio");
+const bgmButton = document.getElementById("bgmButton");
+
+bgmButton.addEventListener("click", function() {
+
+    bgm.volume = 0.20;
+
+    if (bgm.paused) {
+        bgm.play();
+        bgmButton.textContent = "BGMを停止";
+    } else {
+        bgm.pause();
+        bgmButton.textContent = "BGMを再生";
+    }
+
+});
+
+
+const scenes = document.querySelectorAll(".scene");
+
+let currentBgm = "bgm/scene01.mp3";
+let changingBgm = false;
+
+function changeBgm(newBgm) {
+
+    if (currentBgm === newBgm || changingBgm) {
+        return;
+    }
+
+    changingBgm = true;
+
+    let volume = bgm.volume;
+
+    const fadeOut = setInterval(function() {
+
+        volume -= 0.05;
+
+        if (volume <= 0) {
+
+            volume = 0;
+            bgm.volume = 0;
+
+            clearInterval(fadeOut);
+
+            bgm.src = newBgm;
+            bgm.currentTime = 0;
+
+            bgm.play().then(function() {
+
+                let newVolume = 0;
+
+                const fadeIn = setInterval(function() {
+
+                    newVolume += 0.05;
+
+                    if (newVolume >= 0.20) {
+                        newVolume = 0.20;
+                        clearInterval(fadeIn);
+
+                        changingBgm = false;
+
+                    }
+
+                    bgm.volume = newVolume;
+
+                }, 100);
+
+            });
+
+            currentBgm = newBgm;
+
+        }
+
+        bgm.volume = volume;
+
+    }, 100);
+
+}
+
+
+const observer = new IntersectionObserver(function(entries) {
+
+    entries.forEach(function(entry) {
+
+        if (entry.isIntersecting) {
+
+            const newBgm = entry.target.dataset.bgm;
+
+            changeBgm(newBgm);
+
+        }
+
+    });
+
+}, {
+    threshold: 0.5
+});
+
+
+scenes.forEach(function(scene) {
+    observer.observe(scene);
+});
+
 
 </script>
 
