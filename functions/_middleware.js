@@ -123,7 +123,8 @@ export async function onRequest(context) {
     // ログイン処理
     if (url.pathname === "/login" && request.method === "POST") {
         const formData = await request.formData();
-        const enteredKey = formData.get("key");
+       const enteredKey = String(formData.get("key") || "").trim();
+
 
         if (enteredKey !== secret) {
             return new Response(
