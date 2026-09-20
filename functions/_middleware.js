@@ -93,12 +93,15 @@ button {
 
     <form method="POST" action="/login">
         <input
-            type="password"
-            name="key"
-            placeholder="アクセスキー"
-            autocomplete="off"
-            required
-        >
+    type="text"
+    name="key"
+    placeholder="アクセスキー"
+    autocomplete="off"
+    autocapitalize="none"
+    autocorrect="off"
+    spellcheck="false"
+    required
+>
         <br>
         <button type="submit">入場する</button>
     </form>
@@ -125,7 +128,9 @@ export async function onRequest(context) {
     // ログイン処理
     if (url.pathname === "/login" && request.method === "POST") {
         const formData = await request.formData();
-       const enteredKey = String(formData.get("key") || "").replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+       const enteredKey = String(formData.get("key") || "")
+    .normalize("NFKC")
+    .replace(/[\s\u200B-\u200D\uFEFF]/g, "");
 
         if (enteredKey !== secret) {
             return new Response(
