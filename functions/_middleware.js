@@ -116,7 +116,8 @@ export async function onRequest(context) {
 
     const secret = String(env.ACCESS_KEY || "")
     .normalize("NFKC")
-    .replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+    .replace(/[\s\u200B-\u200D\uFEFF]/g, "")
+    .toLowerCase();
 
     if (!secret) {
         return new Response(
@@ -128,9 +129,11 @@ export async function onRequest(context) {
     // ログイン処理
     if (url.pathname === "/login" && request.method === "POST") {
         const formData = await request.formData();
-       const enteredKey = String(formData.get("key") || "")
+      const enteredKey = String(formData.get("key") || "")
     .normalize("NFKC")
-    .replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+    .replace(/[\s\u200B-\u200D\uFEFF]/g, "")
+    .toLowerCase();
+
 
         if (enteredKey !== secret) {
             return new Response(
