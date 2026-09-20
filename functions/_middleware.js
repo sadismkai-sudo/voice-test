@@ -125,7 +125,6 @@ export async function onRequest(context) {
         const formData = await request.formData();
        const enteredKey = String(formData.get("key") || "").trim();
 
-
         if (enteredKey !== secret) {
             return new Response(
                 loginPage("アクセスキーが正しくありません。"),
