@@ -2,13 +2,20 @@
 <html lang="ja">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Audio Novel Test</title>
+<title>Audio Novel</title>
 
 <style>
+
+/* =========================
+   全体
+========================= */
+
+* {
+    box-sizing: border-box;
+}
 
 body {
     margin: 0;
@@ -18,27 +25,44 @@ body {
     line-height: 2.2;
 }
 
+/* =========================
+   本文エリア
+========================= */
+
 .story {
     max-width: 680px;
-    margin: 0 auto;
-    padding: 50px 25px;
-}
-    
-.scene {
     min-height: 100vh;
-    box-sizing: border-box;
-    padding: 80px 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    margin: 0 auto;
+    padding: 70px 25px 120px;
 }
+
+/* =========================
+   シーン
+========================= */
+
+.scene {
+    display: none;
+    min-height: calc(100vh - 190px);
+    flex-direction: column;
+}
+
+.scene.active {
+    display: flex;
+}
+
+/* =========================
+   セリフ
+========================= */
 
 .voice {
     cursor: pointer;
+
     text-decoration: underline;
     text-decoration-color: #888;
     text-underline-offset: 6px;
+
     transition: 0.2s;
+
     display: inline-block;
     padding: 4px 8px;
     margin: 2px 0;
@@ -53,6 +77,113 @@ body {
     text-decoration-color: #fff;
 }
 
+/* =========================
+   ページ移動
+========================= */
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-top: 50px;
+}
+
+.navigation button {
+    padding: 10px 20px;
+
+    background: transparent;
+    color: #eee;
+
+    border: 1px solid #555;
+    border-radius: 4px;
+
+    font-family: serif;
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+.navigation button:hover {
+    opacity: 0.7;
+}
+
+.navigation button:disabled {
+    opacity: 0.2;
+    cursor: default;
+}
+
+/* =========================
+   ページ番号
+========================= */
+
+.page-number {
+    color: #777;
+    font-size: 13px;
+}
+
+/* =========================
+   BGMボタン
+========================= */
+
+#bgmButton {
+    position: fixed;
+
+    top: 20px;
+    right: 20px;
+
+    z-index: 100;
+
+    padding: 8px 14px;
+
+    background: rgba(17, 17, 17, 0.9);
+    color: #aaa;
+
+    border: 1px solid #444;
+    border-radius: 4px;
+
+    font-family: serif;
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+#bgmButton:hover {
+    color: #fff;
+}
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width: 600px) {
+
+    .story {
+        padding:
+            70px
+            22px
+            100px;
+    }
+
+    .scene {
+        min-height: calc(100vh - 170px);
+    }
+
+    .navigation {
+        margin-top: 35px;
+    }
+
+    .navigation button {
+        padding: 9px 16px;
+    }
+
+    #bgmButton {
+        top: 12px;
+        right: 12px;
+        font-size: 12px;
+    }
+}
+
 </style>
 
 </head>
@@ -60,67 +191,159 @@ body {
 
 <body>
 
+<!-- =========================
+     BGMボタン
+========================= -->
+
+<button id="bgmButton">
+    BGMを再生
+</button>
+
+
 <div class="story">
 
-<button id="bgmButton">BGMを再生</button>
 
-<section class="scene" data-bgm="bgm/scene01.mp3">
+    <!-- =========================
+         Scene 1
+    ========================= -->
 
-<p>
-雨が静かに降っていた。
-</p>
+    <section
+        class="scene active"
+        data-bgm="bgm/scene01.mp3"
+    >
 
-<p>
-男は私を見つめた。
-</p>
+        <div class="scene-content">
 
-<p>
-<span class="voice" data-audio="audio/doushita.mp3"
->
-「どうしたの？」
-</span>
-</p>
+            <p>
+                雨が静かに降っていた。
+            </p>
 
-<p>
-私は何も答えなかった。
-</p>
+            <p>
+                男は私を見つめた。
+            </p>
 
-<p>
-<span class="voice" data-audio="audio/kochi.mp3">
-「こっちへおいで」
-</span>
-</p>
+            <p>
+                <span
+                    class="voice"
+                    data-audio="audio/doushita.mp3"
+                >
+                    「どうしたの？」
+                </span>
+            </p>
 
-</section>
+            <p>
+                私は何も答えなかった。
+            </p>
+
+            <p>
+                <span
+                    class="voice"
+                    data-audio="audio/kochi.mp3"
+                >
+                    「こっちへおいで」
+                </span>
+            </p>
+
+        </div>
 
 
-<section class="scene" data-bgm="bgm/scene02.mp3">
+        <div class="navigation">
 
-<p>
-私はゆっくりと部屋へ入った。
-</p>
+            <button
+                class="prev-button"
+                disabled
+            >
+                ← 戻る
+            </button>
 
-<p>
-<span class="voice" data-audio="audio/oborelo.mp3">
-「僕に溺れろ」
-</span>
-</p>
+            <span class="page-number">
+                1 / 2
+            </span>
 
-<p>
-私は高揚感に包まれる。
-</p>
+            <button class="next-button">
+                次へ →
+            </button>
 
-</section>
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         Scene 2
+    ========================= -->
+
+    <section
+        class="scene"
+        data-bgm="bgm/scene02.mp3"
+    >
+
+        <div class="scene-content">
+
+            <p>
+                私はゆっくりと部屋へ入った。
+            </p>
+
+            <p>
+                <span
+                    class="voice"
+                    data-audio="audio/oborelo.mp3"
+                >
+                    「僕に溺れろ」
+                </span>
+            </p>
+
+            <p>
+                私は高揚感に包まれる。
+            </p>
+
+        </div>
+
+
+        <div class="navigation">
+
+            <button class="prev-button">
+                ← 戻る
+            </button>
+
+            <span class="page-number">
+                2 / 2
+            </span>
+
+            <button
+                class="next-button"
+                disabled
+            >
+                次へ →
+            </button>
+
+        </div>
+
+    </section>
+
 
 </div>
 
 
-<audio id="voiceAudio"></audio>
-<audio id="bgmAudio" src="bgm/scene01.mp3" loop></audio>
+<!-- =========================
+     音声
+========================= -->
 
+<audio id="voiceAudio"></audio>
+
+<audio
+    id="bgmAudio"
+    src="bgm/scene01.mp3"
+    loop
+></audio>
 
 
 <script>
+
+/* =========================
+   セリフ音声
+========================= */
 
 const audio = document.getElementById("voiceAudio");
 
@@ -157,68 +380,151 @@ audio.addEventListener("ended", function() {
 });
 
 
+/* =========================
+   BGM
+========================= */
+
 const bgm = document.getElementById("bgmAudio");
+
 const bgmButton = document.getElementById("bgmButton");
+
+
+/*
+   BGM音量
+   以前：0.20
+   今回：0.08
+*/
+
+const BGM_VOLUME = 0.08;
+
+
+bgm.volume = BGM_VOLUME;
+
 
 bgmButton.addEventListener("click", function() {
 
-    bgm.volume = 0.20;
+    bgm.volume = BGM_VOLUME;
 
     if (bgm.paused) {
+
         bgm.play();
+
         bgmButton.textContent = "BGMを停止";
+
     } else {
+
         bgm.pause();
+
         bgmButton.textContent = "BGMを再生";
+
     }
 
 });
 
 
+/* =========================
+   シーン
+========================= */
+
 const scenes = document.querySelectorAll(".scene");
 
-let currentBgm = "bgm/scene01.mp3";
+let currentScene = 0;
+
+
+/* =========================
+   BGMフェード
+========================= */
+
 let changingBgm = false;
+
 
 function changeBgm(newBgm) {
 
-    if (currentBgm === newBgm || changingBgm) {
+    if (bgm.src.endsWith(newBgm)) {
+        return;
+    }
+
+    if (changingBgm) {
         return;
     }
 
     changingBgm = true;
 
+
+    /*
+       BGMが停止中なら、
+       音量だけ変更して曲を切り替える。
+       再生はユーザーがBGMボタンを押した時に行う。
+    */
+
+    if (bgm.paused) {
+
+        bgm.src = newBgm;
+
+        bgm.currentTime = 0;
+
+        bgm.volume = BGM_VOLUME;
+
+        changingBgm = false;
+
+        return;
+    }
+
+
+    /* =========================
+       フェードアウト
+    ========================= */
+
     let volume = bgm.volume;
+
 
     const fadeOut = setInterval(function() {
 
-        volume -= 0.05;
+        volume -= 0.02;
+
 
         if (volume <= 0) {
 
             volume = 0;
+
             bgm.volume = 0;
 
             clearInterval(fadeOut);
 
+
+            /* =========================
+               曲変更
+            ========================= */
+
             bgm.src = newBgm;
+
             bgm.currentTime = 0;
+
 
             bgm.play().then(function() {
 
+                /* =========================
+                   フェードイン
+                ========================= */
+
                 let newVolume = 0;
+
 
                 const fadeIn = setInterval(function() {
 
-                    newVolume += 0.05;
+                    newVolume += 0.02;
 
-                    if (newVolume >= 0.20) {
-                        newVolume = 0.20;
+
+                    if (newVolume >= BGM_VOLUME) {
+
+                        newVolume = BGM_VOLUME;
+
                         clearInterval(fadeIn);
 
                         changingBgm = false;
 
                     }
+
 
                     bgm.volume = newVolume;
 
@@ -226,9 +532,8 @@ function changeBgm(newBgm) {
 
             });
 
-            currentBgm = newBgm;
-
         }
+
 
         bgm.volume = volume;
 
@@ -237,20 +542,86 @@ function changeBgm(newBgm) {
 }
 
 
-const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-            const newBgm = entry.target.dataset.bgm;
-            changeBgm(newBgm);
-        }
+/* =========================
+   シーン表示
+========================= */
+
+function showScene(index) {
+
+    if (index < 0 || index >= scenes.length) {
+        return;
+    }
+
+
+    /* 現在のシーンを非表示 */
+
+    scenes.forEach(function(scene) {
+        scene.classList.remove("active");
     });
-}, {
-    threshold: 0.6
+
+
+    /* 新しいシーンを表示 */
+
+    scenes[index].classList.add("active");
+
+
+    /* シーン番号を更新 */
+
+    currentScene = index;
+
+
+    /* BGM変更 */
+
+    const newBgm = scenes[index].dataset.bgm;
+
+    changeBgm(newBgm);
+
+
+    /* セリフの再生状態をリセット */
+
+    voices.forEach(function(v) {
+        v.classList.remove("playing");
+    });
+
+
+    /* ページの一番上へ */
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+
+
+/* =========================
+   次へ・戻る
+========================= */
+
+const nextButtons = document.querySelectorAll(".next-button");
+
+const prevButtons = document.querySelectorAll(".prev-button");
+
+
+nextButtons.forEach(function(button) {
+
+    button.addEventListener("click", function() {
+
+        showScene(currentScene + 1);
+
+    });
+
 });
 
 
-scenes.forEach(function(scene) {
-    observer.observe(scene);
+prevButtons.forEach(function(button) {
+
+    button.addEventListener("click", function() {
+
+        showScene(currentScene - 1);
+
+    });
+
 });
 
 
@@ -259,3 +630,4 @@ scenes.forEach(function(scene) {
 </body>
 
 </html>
+
