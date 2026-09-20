@@ -9,10 +9,6 @@
 
 <style>
 
-/* =========================
-   全体
-========================= */
-
 * {
     box-sizing: border-box;
 }
@@ -24,10 +20,6 @@ body {
     font-family: serif;
     line-height: 2.2;
 }
-
-/* =========================
-   本文エリア
-========================= */
 
 .story {
     max-width: 680px;
@@ -113,10 +105,6 @@ body {
     cursor: default;
 }
 
-/* =========================
-   ページ番号
-========================= */
-
 .page-number {
     color: #777;
     font-size: 13px;
@@ -191,17 +179,12 @@ body {
 
 <body>
 
-<!-- =========================
-     BGMボタン
-========================= -->
-
 <button id="bgmButton">
     BGMを再生
 </button>
 
 
 <div class="story">
-
 
     <!-- =========================
          Scene 1
@@ -269,7 +252,6 @@ body {
     </section>
 
 
-
     <!-- =========================
          Scene 2
     ========================= -->
@@ -322,13 +304,8 @@ body {
 
     </section>
 
-
 </div>
 
-
-<!-- =========================
-     音声
-========================= -->
 
 <audio id="voiceAudio"></audio>
 
@@ -341,9 +318,9 @@ body {
 
 <script>
 
-/* =========================
+/* ==================================================
    セリフ音声
-========================= */
+================================================== */
 
 const audio = document.getElementById("voiceAudio");
 
@@ -380,9 +357,9 @@ audio.addEventListener("ended", function() {
 });
 
 
-/* =========================
+/* ==================================================
    BGM
-========================= */
+================================================== */
 
 const bgm = document.getElementById("bgmAudio");
 
@@ -390,71 +367,149 @@ const bgmButton = document.getElementById("bgmButton");
 
 
 /*
-   BGM音量
-   以前：0.20
-   今回：0.08
+    BGM音量
+
+    以前：0.20
+    前回：0.08
+    今回：0.08
+
+    今回はHTMLのvolumeではなく、
+    Web Audio APIのGainNodeで音量を制御する。
 */
 
 const BGM_VOLUME = 0.08;
 
 
-bgm.volume = BGM_VOLUME;
+/* ==================================================
+   Web Audio API
+================================================== */
+
+let audioContext = null;
+
+let bgmSource = null;
+
+let bgmGain = null;
 
 
-bgmButton.addEventListener("click", function() {
+function setupBgmAudio() {
 
-    bgm.volume = BGM_VOLUME;
+    if (audioContext) {
+        return;
+    }
+
+
+    audioContext = new (
+        window.AudioContext ||
+        window.webkitAudioContext
+    )();
+
+
+    bgmSource =
+        audioContext.createMediaElementSource(bgm);
+
+
+    bgmGain =
+        audioContext.createGain();
+
+
+    bgmSource.connect(bgmGain);
+
+    bgmGain.connect(audioContext.destination);
+
+
+    bgmGain.gain.value = BGM_VOLUME;
+
+}
+
+
+/* ==================================================
+   BGM再生
+================================================== */
+
+async function playBgm() {
+
+    setupBgmAudio();
+
+
+    if (audioContext.state === "suspended") {
+        await audioContext.resume();
+    }
+
+
+    bgmGain.gain.setValueAtTime(
+        BGM_VOLUME,
+        audioContext.currentTime
+    );
+
+
+    await bgm.play();
+
+
+    bgmButton.textContent = "BGMを停止";
+
+}
+
+
+/* ==================================================
+   BGM停止
+================================================== */
+
+function stopBgm() {
+
+    bgm.pause();
+
+    bgmButton.textContent = "BGMを再生";
+
+}
+
+
+/* ==================================================
+   BGMボタン
+================================================== */
+
+bgmButton.addEventListener("click", async function() {
+
+    setupBgmAudio();
+
+
+    if (audioContext.state === "suspended") {
+        await audioContext.resume();
+    }
+
 
     if (bgm.paused) {
 
-        bgm.play();
-
-        bgmButton.textContent = "BGMを停止";
+        await playBgm();
 
     } else {
 
-        bgm.pause();
-
-        bgmButton.textContent = "BGMを再生";
+        stopBgm();
 
     }
 
 });
 
 
-/* =========================
-   シーン
-========================= */
-
-const scenes = document.querySelectorAll(".scene");
-
-let currentScene = 0;
-
-
-/* =========================
-   BGMフェード
-========================= */
+/* ==================================================
+   BGMシーン切り替え
+================================================== */
 
 let changingBgm = false;
 
 
-function changeBgm(newBgm) {
+async function changeBgm(newBgm) {
 
     if (bgm.src.endsWith(newBgm)) {
         return;
     }
 
-    if (changingBgm) {
-        return;
-    }
 
-    changingBgm = true;
+    setupBgmAudio();
 
 
     /*
-       BGMが停止中なら、
-       音量だけ変更して曲を切り替える。
-       再生はユーザーがBGMボタンを押した時に行う。
+       BGM停止中なら、
+       曲だけ変更して再生しない。
     */
 
     if (bgm.paused) {
@@ -463,164 +518,209 @@ function changeBgm(newBgm) {
 
         bgm.currentTime = 0;
 
-        bgm.volume = BGM_VOLUME;
-
-        changingBgm = false;
-
         return;
     }
 
 
-    /* =========================
-       フェードアウト
-    ========================= */
-
-    let volume = bgm.volume;
+    if (changingBgm) {
+        return;
+    }
 
 
-    const fadeOut = setInterval(function() {
-
-        volume -= 0.02;
+    changingBgm = true;
 
 
-        if (volume <= 0) {
-
-            volume = 0;
-
-            bgm.volume = 0;
-
-            clearInterval(fadeOut);
+    const now = audioContext.currentTime;
 
 
-            /* =========================
-               曲変更
-            ========================= */
+    /*
+       約0.15秒でフェードアウト
+    */
 
-            bgm.src = newBgm;
+    bgmGain.gain.cancelScheduledValues(now);
 
-            bgm.currentTime = 0;
+    bgmGain.gain.setValueAtTime(
+        bgmGain.gain.value,
+        now
+    );
 
-
-            bgm.play().then(function() {
-
-                /* =========================
-                   フェードイン
-                ========================= */
-
-                let newVolume = 0;
-
-
-                const fadeIn = setInterval(function() {
-
-                    newVolume += 0.02;
+    bgmGain.gain.linearRampToValueAtTime(
+        0,
+        now + 0.15
+    );
 
 
-                    if (newVolume >= BGM_VOLUME) {
+    /*
+       フェードアウト完了後に曲変更
+    */
 
-                        newVolume = BGM_VOLUME;
+    setTimeout(async function() {
 
-                        clearInterval(fadeIn);
+        bgm.src = newBgm;
 
-                        changingBgm = false;
-
-                    }
+        bgm.currentTime = 0;
 
 
-                    bgm.volume = newVolume;
+        try {
 
-                }, 100);
+            await bgm.play();
 
-            });
+        } catch (error) {
+
+            changingBgm = false;
+
+            return;
 
         }
 
 
-        bgm.volume = volume;
+        const newNow = audioContext.currentTime;
 
-    }, 100);
+
+        /*
+           約0.15秒でフェードイン
+        */
+
+        bgmGain.gain.cancelScheduledValues(newNow);
+
+        bgmGain.gain.setValueAtTime(
+            0,
+            newNow
+        );
+
+        bgmGain.gain.linearRampToValueAtTime(
+            BGM_VOLUME,
+            newNow + 0.15
+        );
+
+
+        changingBgm = false;
+
+    }, 160);
 
 }
 
 
-/* =========================
-   シーン表示
-========================= */
+/* ==================================================
+   シーン
+================================================== */
 
-function showScene(index) {
+const scenes =
+    document.querySelectorAll(".scene");
 
-    if (index < 0 || index >= scenes.length) {
+let currentScene = 0;
+
+
+/* ==================================================
+   シーン変更
+================================================== */
+
+async function showScene(index) {
+
+    if (
+        index < 0 ||
+        index >= scenes.length
+    ) {
         return;
     }
 
 
-    /* 現在のシーンを非表示 */
+    /*
+       ★ 前のシーンのセリフを即停止
+    */
 
-    scenes.forEach(function(scene) {
-        scene.classList.remove("active");
-    });
+    audio.pause();
 
+    audio.currentTime = 0;
 
-    /* 新しいシーンを表示 */
-
-    scenes[index].classList.add("active");
-
-
-    /* シーン番号を更新 */
-
-    currentScene = index;
-
-
-    /* BGM変更 */
-
-    const newBgm = scenes[index].dataset.bgm;
-
-    changeBgm(newBgm);
-
-
-    /* セリフの再生状態をリセット */
 
     voices.forEach(function(v) {
         v.classList.remove("playing");
     });
 
 
-    /* ページの一番上へ */
+    /*
+       シーン表示変更
+    */
+
+    scenes.forEach(function(scene) {
+        scene.classList.remove("active");
+    });
+
+
+    scenes[index].classList.add("active");
+
+
+    currentScene = index;
+
+
+    /*
+       BGM変更
+    */
+
+    const newBgm =
+        scenes[index].dataset.bgm;
+
+
+    await changeBgm(newBgm);
+
+
+    /*
+       ページ上部へ
+    */
 
     window.scrollTo({
         top: 0,
-        behavior: "smooth"
+        behavior: "instant"
     });
 
 }
 
 
-/* =========================
-   次へ・戻る
-========================= */
+/* ==================================================
+   次へ
+================================================== */
 
-const nextButtons = document.querySelectorAll(".next-button");
-
-const prevButtons = document.querySelectorAll(".prev-button");
+const nextButtons =
+    document.querySelectorAll(".next-button");
 
 
 nextButtons.forEach(function(button) {
 
-    button.addEventListener("click", function() {
+    button.addEventListener(
+        "click",
+        function() {
 
-        showScene(currentScene + 1);
+            showScene(
+                currentScene + 1
+            );
 
-    });
+        }
+    );
 
 });
 
 
+/* ==================================================
+   戻る
+================================================== */
+
+const prevButtons =
+    document.querySelectorAll(".prev-button");
+
+
 prevButtons.forEach(function(button) {
 
-    button.addEventListener("click", function() {
+    button.addEventListener(
+        "click",
+        function() {
 
-        showScene(currentScene - 1);
+            showScene(
+                currentScene - 1
+            );
 
-    });
+        }
+    );
 
 });
 
