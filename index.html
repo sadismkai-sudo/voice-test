@@ -23,6 +23,15 @@ body {
     margin: 0 auto;
     padding: 50px 25px;
 }
+    
+.scene {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 80px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
 
 .voice {
     cursor: pointer;
@@ -229,21 +238,14 @@ function changeBgm(newBgm) {
 
 
 const observer = new IntersectionObserver(function(entries) {
-
     entries.forEach(function(entry) {
-
         if (entry.isIntersecting) {
-
             const newBgm = entry.target.dataset.bgm;
-
             changeBgm(newBgm);
-
         }
-
     });
-
 }, {
-    threshold: 0.5
+    threshold: 0.6
 });
 
 
