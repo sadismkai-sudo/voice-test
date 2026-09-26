@@ -28,11 +28,6 @@ body {
     padding: 70px 25px 120px;
 }
 
-/* 音声要素は画面に表示しない */
-.audio-only {
-    display: none;
-}
-
 /* =========================
    ページ・シーン
 ========================= */
@@ -331,16 +326,8 @@ body {
 
 <body>
 
-<!-- 音声要素をページ先頭に置く -->
-<audio
-    id="voiceAudio"
-    class="audio-only"
-    preload="none"
-></audio>
-
 <audio
     id="bgmAudio"
-    class="audio-only"
     src="bgm/scene01.mp3"
     loop
     preload="auto"
@@ -619,82 +606,81 @@ body {
    セリフ音声
 ================================================== */
 
-const audio = document.getElementById("voiceAudio");
 const voices = document.querySelectorAll(".voice");
+let currentVoicePlayer = null;
+
+function stopCurrentVoice() {
+    if (currentVoicePlayer) {
+        currentVoicePlayer.pause();
+        currentVoicePlayer = null;
+    }
+
+    voices.forEach(function(voice) {
+        voice.classList.remove("playing");
+    });
+}
 
 voices.forEach(function(voice) {
     voice.addEventListener("click", function(event) {
         event.preventDefault();
 
-        const sceneContent = voice.closest(".scene-content");
-
-        /* タップ前のページと縦書き本文のスクロール位置を記録 */
-        const pageX = window.scrollX;
-        const pageY = window.scrollY;
-        const contentScrollLeft = sceneContent
-            ? sceneContent.scrollLeft
-            : 0;
-        const contentScrollTop = sceneContent
-            ? sceneContent.scrollTop
-            : 0;
-
-        voices.forEach(function(v) {
-            v.classList.remove("playing");
-        });
-
+        stopCurrentVoice();
         voice.classList.add("playing");
 
-        /*
-           現在の音声を止めて次の音声へ切り替える。
-           play()はタップイベント内ですぐに呼び出す。
-        */
-        audio.pause();
-        audio.src = voice.dataset.audio;
-        audio.currentTime = 0;
-
-        const playPromise = audio.play();
+        const audioUrl = new URL(
+            voice.dataset.audio,
+            document.baseURI
+        ).href;
 
         /*
-           iPhone Safariが再生時に表示位置を動かした場合、
-           タップ前の位置に戻す。
+           DOMに置いたaudio要素のsrcを差し替えず、
+           画面に配置しないAudioオブジェクトで再生する。
+           iPhone Safariでのスクロール位置変化を避ける。
         */
-        function restoreScrollPosition() {
-            window.scrollTo({
-                left: pageX,
-                top: pageY,
-                behavior: "instant"
-            });
+        const player = new Audio(audioUrl);
+        player.preload = "auto";
+        player.playsInline = true;
+        currentVoicePlayer = player;
 
-            if (sceneContent) {
-                sceneContent.scrollLeft = contentScrollLeft;
-                sceneContent.scrollTop = contentScrollTop;
+        player.addEventListener("ended", function() {
+            if (currentVoicePlayer === player) {
+                currentVoicePlayer = null;
+                voice.classList.remove("playing");
             }
-        }
-
-        restoreScrollPosition();
-        requestAnimationFrame(restoreScrollPosition);
-        requestAnimationFrame(function() {
-            requestAnimationFrame(restoreScrollPosition);
         });
+
+        player.addEventListener("error", function() {
+            if (currentVoicePlayer === player) {
+                currentVoicePlayer = null;
+                voice.classList.remove("playing");
+            }
+
+            console.error(
+                "セリフ音声を読み込めませんでした:",
+                audioUrl
+            );
+        });
+
+        /*
+           play()をタップイベント内ですぐ実行し、
+           iPhoneのユーザー操作による再生許可を引き継ぐ。
+        */
+        const playPromise = player.play();
 
         if (playPromise !== undefined) {
             playPromise.catch(function(error) {
-                voice.classList.remove("playing");
+                if (currentVoicePlayer === player) {
+                    currentVoicePlayer = null;
+                    voice.classList.remove("playing");
+                }
+
                 console.error(
                     "セリフ音声を再生できませんでした:",
-                    voice.dataset.audio,
+                    audioUrl,
                     error
                 );
-
-                restoreScrollPosition();
             });
         }
-    });
-});
-
-audio.addEventListener("ended", function() {
-    voices.forEach(function(voice) {
-        voice.classList.remove("playing");
     });
 });
 
@@ -739,6 +725,7 @@ function setupBgmAudio() {
         bgmGainNode = audioContext.createGain();
 
         bgmGainNode.gain.value = BGM_VOLUME;
+
         bgmSource.connect(bgmGainNode);
         bgmGainNode.connect(audioContext.destination);
 
@@ -846,24 +833,14 @@ const scenes = document.querySelectorAll(".scene");
 let currentScene = 0;
 
 
-/* ==================================================
-   ページ変更
-================================================== */
-
 function showScene(index) {
     if (index < 0 || index >= scenes.length) {
         return;
     }
 
-    /* 前のシーンのセリフを停止 */
-    audio.pause();
-    audio.currentTime = 0;
+    /* 再生中の台詞を停止 */
+    stopCurrentVoice();
 
-    voices.forEach(function(voice) {
-        voice.classList.remove("playing");
-    });
-
-    /* ページ表示を切り替える */
     scenes.forEach(function(scene) {
         scene.classList.remove("active");
     });
@@ -871,7 +848,6 @@ function showScene(index) {
     scenes[index].classList.add("active");
     currentScene = index;
 
-    /* BGMが設定されているシーンだけ曲を切り替える */
     const newBgm = scenes[index].dataset.bgm;
 
     if (newBgm) {
