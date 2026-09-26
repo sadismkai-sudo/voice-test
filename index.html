@@ -356,6 +356,12 @@ body {
 <body>
 
 <audio
+    id="voiceAudio"
+    preload="auto"
+    playsinline
+></audio>
+
+<audio
     id="bgmAudio"
     src="bgm/scene01.mp3"
     loop
@@ -647,17 +653,16 @@ const voiceButtons = Array.from(
 );
 
 const audioStatus = document.getElementById("audioStatus");
+const voicePlayer = document.getElementById("voiceAudio");
 
-let currentVoicePlayer = null;
 let currentVoiceButton = null;
 
-
 function stopCurrentVoice() {
-    if (currentVoicePlayer) {
-        currentVoicePlayer.pause();
-        currentVoicePlayer.removeAttribute("src");
-        currentVoicePlayer.load();
-        currentVoicePlayer = null;
+    voicePlayer.pause();
+    try {
+        voicePlayer.currentTime = 0;
+    } catch (error) {
+        /* メタデータ読込前はcurrentTimeを設定できない場合がある */
     }
 
     if (currentVoiceButton) {
@@ -666,6 +671,22 @@ function stopCurrentVoice() {
     }
 }
 
+voicePlayer.addEventListener("ended", function() {
+    if (currentVoiceButton) {
+        currentVoiceButton.classList.remove("playing");
+        currentVoiceButton = null;
+    }
+});
+
+voicePlayer.addEventListener("error", function() {
+    if (currentVoiceButton) {
+        currentVoiceButton.classList.remove("playing");
+        currentVoiceButton = null;
+    }
+
+    audioStatus.textContent = "台詞音声を再生できませんでした。";
+    console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
+});
 
 voiceButtons.forEach(function(button) {
     button.addEventListener("click", function(event) {
@@ -678,69 +699,38 @@ voiceButtons.forEach(function(button) {
         ).href;
 
         stopCurrentVoice();
-
-        /*
-         * 音声URLをタップ時に直接設定する。
-         * play()をユーザー操作の同期処理中に呼ぶことで、
-         * iPhone Safariの自動再生制限にかかりにくくする。
-         */
-        const player = new Audio();
-        player.preload = "auto";
-        player.playsInline = true;
-        player.src = audioUrl;
-
-        currentVoicePlayer = player;
+        audioStatus.textContent = "";
         currentVoiceButton = button;
         button.classList.add("playing");
 
-        player.addEventListener("ended", function() {
-            if (currentVoicePlayer === player) {
-                stopCurrentVoice();
-            }
-        });
-
-        player.addEventListener("error", function() {
-            if (currentVoicePlayer === player) {
-                stopCurrentVoice();
-            }
-
-            audioStatus.textContent =
-                "台詞音声を再生できませんでした。";
-
-            console.error(
-                "音声再生エラー:",
-                audioUrl,
-                player.error
-            );
-        });
+        /*
+         * 1つのaudio要素を使い回し、ユーザーのタップ処理中に
+         * 音源設定とplay()を続けて行う。iPhone Safariで複数の
+         * 動的Audio要素を作成したときの再生失敗を避ける。
+         */
+        voicePlayer.src = audioUrl;
 
         let playPromise;
-
         try {
-            playPromise = player.play();
+            playPromise = voicePlayer.play();
         } catch (error) {
             playPromise = Promise.reject(error);
         }
 
         if (playPromise && typeof playPromise.catch === "function") {
             playPromise.catch(function(error) {
-                if (currentVoicePlayer === player) {
-                    stopCurrentVoice();
+                if (currentVoiceButton === button) {
+                    button.classList.remove("playing");
+                    currentVoiceButton = null;
                 }
 
                 audioStatus.textContent =
                     "台詞音声を再生できませんでした。";
-
-                console.error(
-                    "台詞音声を再生できませんでした:",
-                    audioUrl,
-                    error
-                );
+                console.error("台詞音声を再生できませんでした:", audioUrl, error);
             });
         }
     });
 });
-
 
 /* ==================================================
    BGM 音量処理
