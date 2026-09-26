@@ -57,12 +57,20 @@ body {
 ========================= */
 
 .title-screen .scene-content {
-    width: 100%;
+    /* タイトル画面は横書きで中央に配置 */
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    width: 100%;
+    height: calc(100vh - 270px);
+    min-height: 300px;
+
+    overflow: hidden;
     text-align: center;
-    overflow: visible;
 }
 
 .title-content {
@@ -70,25 +78,72 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.5em;
+
+    width: 100%;
+    max-width: 480px;
+    padding: 30px 20px;
+}
+
+.title-kicker {
+    margin: 0 0 12px;
+
+    color: #aaa;
+    font-family: sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
 }
 
 .novel-title {
     margin: 0;
-    font-size: 2.2rem;
+
+    color: #f4eee4;
+    font-size: clamp(1.45rem, 7vw, 3.2rem);
     font-weight: normal;
     letter-spacing: 0.12em;
+    line-height: 1.5;
+    white-space: nowrap;
 }
 
-.author,
-.cast {
+.title-divider {
+    width: 48px;
+    height: 1px;
+    margin: 26px 0;
+
+    background: #8e806e;
+    border: 0;
+}
+
+.title-credit {
     margin: 0;
+
+    color: #eee;
     font-size: 1rem;
+    letter-spacing: 0.08em;
 }
 
-.cast-name {
-    display: inline-block;
-    margin-top: 0.4em;
+.title-credit-label {
+    display: block;
+    margin-bottom: 3px;
+
+    color: #888;
+    font-family: sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+}
+
+.title-cast {
+    margin-top: 20px;
+}
+
+.cast-names {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4em 1.4em;
+
+    color: #eee;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
 }
 
 /* =========================
@@ -216,11 +271,24 @@ body {
     }
 
     .title-screen .scene-content {
-        overflow: visible;
+        height: calc(100vh - 240px);
+        min-height: 250px;
     }
 
-    .novel-title {
-        font-size: 1.8rem;
+    .title-content {
+        padding: 20px 10px;
+    }
+
+    .title-kicker {
+        font-size: 0.65rem;
+    }
+
+    .title-divider {
+        margin: 20px 0;
+    }
+
+    .title-cast {
+        margin-top: 16px;
     }
 
     .navigation {
@@ -258,21 +326,35 @@ body {
 
     <section class="scene title-screen active">
 
-        <div class="scene-content title-content">
+        <div class="scene-content">
 
-            <h1 class="novel-title">
-                パラダイス・ロスト
-            </h1>
+            <div class="title-content">
 
-            <p class="author">
-                原作者　雨津庵
-            </p>
+                <p class="title-kicker">
+                    AUDIO NOVEL
+                </p>
 
-            <p class="cast">
-                キャスト<br>
-                <span class="cast-name">佐渡快</span><br>
-                <span class="cast-name">中村宏平</span>
-            </p>
+                <h1 class="novel-title">
+                    パラダイス・ロスト
+                </h1>
+
+                <hr class="title-divider">
+
+                <p class="title-credit">
+                    <span class="title-credit-label">原作者</span>
+                    雨津庵
+                </p>
+
+                <div class="title-credit title-cast">
+                    <span class="title-credit-label">CAST</span>
+
+                    <div class="cast-names">
+                        <span>佐渡快</span>
+                        <span>中村宏平</span>
+                    </div>
+                </div>
+
+            </div>
 
         </div>
 
