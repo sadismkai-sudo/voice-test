@@ -63,8 +63,6 @@ body {
     color: #aaa;
     font-size: 1.15rem;
     letter-spacing: 0.08em;
-
-    /* 本文との間に一行分の間隔を設ける */
     margin-block-end: 1.4em !important;
 }
 
@@ -531,6 +529,7 @@ body {
     id="bgmAudio"
     src="bgm/scene01.mp3"
     loop
+    preload="auto"
 ></audio>
 
 
@@ -570,21 +569,76 @@ audio.addEventListener("ended", function() {
 
 
 /* ==================================================
-   BGM
+   BGM 音量処理
 ================================================== */
 
 const bgm = document.getElementById("bgmAudio");
 const bgmButton = document.getElementById("bgmButton");
 
-const BGM_VOLUME = 0.08;
+/*
+   Web Audio APIを使う環境ではゲインノードで音量を調整。
+   通常のaudio再生に切り替わった場合の音量も指定する。
+*/
+const BGM_VOLUME = 0.12;
+
+let bgmEnabled = false;
+let audioContext = null;
+let bgmSource = null;
+let bgmGainNode = null;
+let useWebAudio = false;
+let audioSetupAttempted = false;
+
 
 /*
-   ユーザーがBGMボタンで再生を選んだかどうか。
-   trueなら、シーンを切り替えたときも新しいBGMを再生する。
+   Web Audio APIの音声経路を作成する。
+   file:// やAudioContext非対応環境では、通常のaudio再生を使う。
 */
-let bgmEnabled = false;
+function setupBgmAudio() {
+    if (audioSetupAttempted) {
+        return;
+    }
 
-bgm.volume = BGM_VOLUME;
+    audioSetupAttempted = true;
+
+    const isLocalFile = window.location.protocol === "file:";
+    const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+
+    if (isLocalFile || !AudioContextClass) {
+        bgm.volume = BGM_VOLUME;
+        useWebAudio = false;
+        return;
+    }
+
+    try {
+        audioContext = new AudioContextClass();
+        bgmSource = audioContext.createMediaElementSource(bgm);
+        bgmGainNode = audioContext.createGain();
+
+        bgmGainNode.gain.value = BGM_VOLUME;
+
+        bgmSource.connect(bgmGainNode);
+        bgmGainNode.connect(audioContext.destination);
+
+        /*
+           Web Audio API側で音量を調整するため、
+           audio要素は最大値にしておく。
+        */
+        bgm.volume = 1;
+        useWebAudio = true;
+    } catch (error) {
+        console.warn(
+            "Web Audio APIを使えないため、通常の音声再生に切り替えます:",
+            error
+        );
+
+        audioContext = null;
+        bgmSource = null;
+        bgmGainNode = null;
+        bgm.volume = BGM_VOLUME;
+        useWebAudio = false;
+    }
+}
 
 
 function updateBgmButton() {
@@ -594,27 +648,59 @@ function updateBgmButton() {
 }
 
 
-/* BGM再生・停止ボタン */
-bgmButton.addEventListener("click", async function() {
+/*
+   再生を開始する。
+   play()とAudioContext.resume()を、クリック操作の直後に呼び出す。
+*/
+function startBgmPlayback() {
+    setupBgmAudio();
+
+    let resumePromise = Promise.resolve();
+
+    if (
+        useWebAudio &&
+        audioContext &&
+        audioContext.state === "suspended"
+    ) {
+        resumePromise = audioContext.resume();
+    }
+
+    let playPromise;
+
+    try {
+        playPromise = bgm.play();
+    } catch (error) {
+        playPromise = Promise.reject(error);
+    }
+
+    Promise.all([resumePromise, playPromise])
+        .then(function() {
+            bgmEnabled = true;
+            updateBgmButton();
+        })
+        .catch(function(error) {
+            bgmEnabled = false;
+            updateBgmButton();
+            console.error("BGMを再生できませんでした:", error);
+        });
+}
+
+
+/* ==================================================
+   BGM再生・停止
+================================================== */
+
+bgmButton.addEventListener("click", function() {
     if (bgmEnabled) {
         bgmEnabled = false;
         bgm.pause();
-        bgm.volume = BGM_VOLUME;
         updateBgmButton();
         return;
     }
 
     bgmEnabled = true;
-    bgm.volume = BGM_VOLUME;
     updateBgmButton();
-
-    try {
-        await bgm.play();
-    } catch (error) {
-        bgmEnabled = false;
-        updateBgmButton();
-        console.error("BGMを再生できませんでした:", error);
-    }
+    startBgmPlayback();
 });
 
 
@@ -631,31 +717,17 @@ function changeBgm(newBgm) {
 
     const shouldPlay = bgmEnabled;
 
-    /*
-       曲を切り替える。
-       BGMがオンなら、src変更後すぐにplay()を呼び出す。
-    */
     bgm.pause();
     bgm.src = newBgmUrl;
     bgm.currentTime = 0;
-    bgm.volume = BGM_VOLUME;
 
     if (shouldPlay) {
-        const playPromise = bgm.play();
-
-        if (playPromise !== undefined) {
-            playPromise.catch(function(error) {
-                bgmEnabled = false;
-                updateBgmButton();
-                console.error(
-                    "次のシーンのBGMを再生できませんでした:",
-                    error
-                );
-            });
-        }
+        /*
+           次の曲もユーザーがBGMをオンにした状態を引き継いで再生する。
+           play()はシーン移動のクリック直後に呼ばれる。
+        */
+        startBgmPlayback();
     }
-
-    updateBgmButton();
 }
 
 
