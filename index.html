@@ -62,7 +62,7 @@ body {
     min-height: 300px;
     overflow-x: auto;
     overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
+    overflow-anchor: none;
 }
 
 /* 本文の段落間隔 */
@@ -207,8 +207,6 @@ body {
 
     user-select: none;
     -webkit-user-select: none;
-
-    transition: opacity 0.2s;
 }
 
 .voice:hover {
@@ -562,7 +560,7 @@ body {
             </p>
 
             <p>
-                <button class="voice" type="button" data-audio="audio/scene01/08.mp3">「なに不貞腐れてんねん」</button>
+                <button class="voice" type="button" data-audio="audio/scene01/08.mp3">「なに不貞腐れてんねん</button>
             </p>
 
             <p class="narration">
@@ -641,7 +639,7 @@ body {
 <script>
 
 /* ==================================================
-   台詞音声の認証付き読み込み
+   台詞音声を認証付きで先読みする
 ================================================== */
 
 const voiceButtons = Array.from(
@@ -655,10 +653,6 @@ let currentVoicePlayer = null;
 let currentVoiceButton = null;
 
 
-/*
-   音声を同一オリジンの認証Cookie付きで取得し、
-   再生用のBlob URLを作る。
-*/
 async function loadVoiceAudio(button) {
     const audioUrl = new URL(
         button.dataset.audio,
@@ -667,20 +661,19 @@ async function loadVoiceAudio(button) {
 
     const response = await fetch(audioUrl, {
         method: "GET",
-        credentials: "same-origin",
+        credentials: "include",
         cache: "no-store"
     });
 
     if (!response.ok) {
         throw new Error(
-            "HTTP " + response.status + " (" + audioUrl + ")"
+            "HTTP " + response.status + ": " + audioUrl
         );
     }
 
     if (response.redirected) {
         throw new Error(
-            "音声URLが別ページへ転送されました: " +
-            response.url
+            "音声URLが転送されました: " + response.url
         );
     }
 
@@ -692,7 +685,7 @@ async function loadVoiceAudio(button) {
         !contentType.includes("octet-stream")
     ) {
         throw new Error(
-            "音声ではないデータが返されました (" +
+            "音声以外のデータが返されました (" +
             contentType +
             "): " +
             audioUrl
@@ -709,40 +702,30 @@ async function loadVoiceAudio(button) {
 }
 
 
-/* ページ読み込み中に台詞音声を準備する */
 async function preloadVoiceAudio() {
     audioStatus.textContent = "台詞音声を準備しています。";
 
-    const results = await Promise.allSettled(
-        voiceButtons.map(async function(button) {
-            button.disabled = true;
+    let failedCount = 0;
 
-            try {
-                const blobUrl = await loadVoiceAudio(button);
-                voiceAudioCache.set(button, blobUrl);
-                button.disabled = false;
-                return true;
-            } catch (error) {
-                button.dataset.audioLoadError = error.message;
-                button.disabled = false;
+    await Promise.all(voiceButtons.map(async function(button) {
+        button.disabled = true;
 
-                console.error(
-                    "台詞音声を読み込めませんでした:",
-                    button.dataset.audio,
-                    error
-                );
+        try {
+            const blobUrl = await loadVoiceAudio(button);
+            voiceAudioCache.set(button, blobUrl);
+        } catch (error) {
+            failedCount += 1;
+            button.dataset.audioLoadError = error.message;
 
-                return false;
-            }
-        })
-    );
-
-    const failedCount = results.filter(function(result) {
-        return (
-            result.status === "rejected" ||
-            result.value === false
-        );
-    }).length;
+            console.error(
+                "台詞音声を読み込めませんでした:",
+                button.dataset.audio,
+                error
+            );
+        } finally {
+            button.disabled = false;
+        }
+    }));
 
     if (failedCount > 0) {
         audioStatus.textContent =
@@ -753,7 +736,6 @@ async function preloadVoiceAudio() {
 }
 
 
-/* 現在の台詞を止める */
 function stopCurrentVoice() {
     if (currentVoicePlayer) {
         currentVoicePlayer.pause();
@@ -769,7 +751,6 @@ function stopCurrentVoice() {
 }
 
 
-/* 台詞ボタン */
 voiceButtons.forEach(function(button) {
     button.addEventListener("click", function(event) {
         event.preventDefault();
@@ -786,6 +767,8 @@ voiceButtons.forEach(function(button) {
                 button.dataset.audio,
                 button.dataset.audioLoadError || ""
             );
+
+            button.blur();
             return;
         }
 
@@ -814,17 +797,18 @@ voiceButtons.forEach(function(button) {
                 "台詞音声を再生できませんでした。";
 
             console.error(
-                "台詞音声の再生エラー:",
+                "音声再生エラー:",
                 button.dataset.audio,
                 player.error
             );
         });
 
         /*
-           Blob URLは認証済みで読み込み済み。
-           タップイベント内でplay()を呼び出す。
+           音声をタップ操作中に再生開始する。
+           blur()でiPhone Safariのボタンフォーカスを外す。
         */
         const playPromise = player.play();
+        button.blur();
 
         if (playPromise !== undefined) {
             playPromise.catch(function(error) {
@@ -886,7 +870,6 @@ function setupBgmAudio() {
         bgmGainNode = audioContext.createGain();
 
         bgmGainNode.gain.value = BGM_VOLUME;
-
         bgmSource.connect(bgmGainNode);
         bgmGainNode.connect(audioContext.destination);
 
@@ -1040,7 +1023,7 @@ prevButtons.forEach(function(button) {
 });
 
 
-/* 台詞音声を読み込む */
+/* 台詞音声を認証付きで読み込む */
 preloadVoiceAudio();
 
 
