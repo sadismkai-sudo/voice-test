@@ -166,13 +166,24 @@ body {
 }
 
 /* =========================
-   セリフ
+   音声付き台詞ボタン
 ========================= */
 
 .voice {
     display: inline-block;
-    padding: 4px 8px;
     margin: 2px 0;
+    padding: 4px 8px;
+
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: start;
 
     cursor: pointer;
     touch-action: manipulation;
@@ -182,7 +193,10 @@ body {
     text-decoration-color: #888;
     text-underline-offset: 6px;
 
-    transition: 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+
+    transition: opacity 0.2s;
 }
 
 .voice:hover {
@@ -420,7 +434,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/01.mp3">「んー？なに？」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/01.mp3">「んー？なに？」</button>
             </p>
 
             <p class="narration">
@@ -432,7 +446,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/02.mp3">「どしたん？」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/02.mp3">「どしたん？」</button>
             </p>
 
             <p class="narration">
@@ -446,7 +460,7 @@ body {
             <p>「あのね、私……ペットを飼いたくて……」</p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/03.mp3">「はあ？」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/03.mp3">「はあ？」</button>
             </p>
 
             <p class="narration">
@@ -454,7 +468,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/04.mp3">「なんでペットがペットを飼うねん」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/04.mp3">「なんでペットがペットを飼うねん」</button>
             </p>
 
             <p class="narration">
@@ -466,7 +480,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/05.mp3">「あほ。暇が理由で動物飼うな。〝でもいい〞ってなんやねん、命やで。そもそも、このアパートはペット禁止や」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/05.mp3">「あほ。暇が理由で動物飼うな。〝でもいい〞ってなんやねん、命やで。そもそも、このアパートはペット禁止や」</button>
             </p>
 
             <p class="narration">
@@ -476,7 +490,7 @@ body {
             <p>「バレないように静かに飼うもん」</p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/06.mp3">「そういう問題ちゃうねん。こんな狭い部屋で動物なんか飼ったら可哀想やろ」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/06.mp3">「そういう問題ちゃうねん。こんな狭い部屋で動物なんか飼ったら可哀想やろ」</button>
             </p>
 
             <p class="narration">
@@ -505,7 +519,7 @@ body {
 
             <p class="narration">
                 それをそのまま伝えると、
-                <span class="voice" data-audio="audio/scene01/07.mp3">「今までどんな男と暮らしててん」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/07.mp3">「今までどんな男と暮らしててん」</button>
                 と、呆れたような憐れむような顔をされたのが可笑しくて、よく覚えている。
             </p>
 
@@ -524,7 +538,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/scene01/08.mp3">「なに不貞腐れてんねん」</span>
+                <button class="voice" type="button" data-audio="audio/scene01/08.mp3">「なに不貞腐れてんねん」</button>
             </p>
 
             <p class="narration">
@@ -568,7 +582,7 @@ body {
             </p>
 
             <p>
-                <span class="voice" data-audio="audio/oborelo.mp3">「僕に溺れろ」</span>
+                <button class="voice" type="button" data-audio="audio/oborelo.mp3">「僕に溺れろ」</button>
             </p>
 
             <p class="narration">
@@ -608,11 +622,17 @@ body {
 
 const voices = document.querySelectorAll(".voice");
 let currentVoicePlayer = null;
+let currentVoiceButton = null;
 
 function stopCurrentVoice() {
     if (currentVoicePlayer) {
         currentVoicePlayer.pause();
         currentVoicePlayer = null;
+    }
+
+    if (currentVoiceButton) {
+        currentVoiceButton.classList.remove("playing");
+        currentVoiceButton = null;
     }
 
     voices.forEach(function(voice) {
@@ -623,28 +643,27 @@ function stopCurrentVoice() {
 voices.forEach(function(voice) {
     voice.addEventListener("click", function(event) {
         event.preventDefault();
+        event.stopPropagation();
 
         stopCurrentVoice();
-        voice.classList.add("playing");
 
         const audioUrl = new URL(
             voice.dataset.audio,
             document.baseURI
         ).href;
 
-        /*
-           DOMに置いたaudio要素のsrcを差し替えず、
-           画面に配置しないAudioオブジェクトで再生する。
-           iPhone Safariでのスクロール位置変化を避ける。
-        */
-        const player = new Audio(audioUrl);
+        const player = new Audio();
         player.preload = "auto";
         player.playsInline = true;
+
         currentVoicePlayer = player;
+        currentVoiceButton = voice;
+        voice.classList.add("playing");
 
         player.addEventListener("ended", function() {
             if (currentVoicePlayer === player) {
                 currentVoicePlayer = null;
+                currentVoiceButton = null;
                 voice.classList.remove("playing");
             }
         });
@@ -652,25 +671,30 @@ voices.forEach(function(voice) {
         player.addEventListener("error", function() {
             if (currentVoicePlayer === player) {
                 currentVoicePlayer = null;
+                currentVoiceButton = null;
                 voice.classList.remove("playing");
             }
 
             console.error(
                 "セリフ音声を読み込めませんでした:",
-                audioUrl
+                audioUrl,
+                player.error
             );
         });
 
         /*
-           play()をタップイベント内ですぐ実行し、
-           iPhoneのユーザー操作による再生許可を引き継ぐ。
+           タップイベント中にsrcを設定してすぐplay()を呼び、
+           iPhone Safariの再生許可を引き継ぐ。
         */
+        player.src = audioUrl;
+
         const playPromise = player.play();
 
         if (playPromise !== undefined) {
             playPromise.catch(function(error) {
                 if (currentVoicePlayer === player) {
                     currentVoicePlayer = null;
+                    currentVoiceButton = null;
                     voice.classList.remove("playing");
                 }
 
@@ -725,7 +749,6 @@ function setupBgmAudio() {
         bgmGainNode = audioContext.createGain();
 
         bgmGainNode.gain.value = BGM_VOLUME;
-
         bgmSource.connect(bgmGainNode);
         bgmGainNode.connect(audioContext.destination);
 
@@ -787,7 +810,6 @@ function startBgmPlayback() {
 }
 
 
-/* BGM再生・停止ボタン */
 bgmButton.addEventListener("click", function() {
     if (bgmEnabled) {
         bgmEnabled = false;
@@ -838,7 +860,6 @@ function showScene(index) {
         return;
     }
 
-    /* 再生中の台詞を停止 */
     stopCurrentVoice();
 
     scenes.forEach(function(scene) {
