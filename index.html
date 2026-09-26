@@ -18,7 +18,7 @@ body {
     background: #111;
     color: #eee;
     font-family: serif;
-    line-height: 2.2;
+    line-height: 1.4;
 }
 
 .story {
@@ -50,6 +50,22 @@ body {
     min-height: 300px;
     overflow-x: auto;
     overflow-y: hidden;
+}
+
+/* 本文の段落間隔 */
+.scene-content p {
+    margin-block: 0 0.45em;
+    margin-inline: 0;
+}
+
+/* シーン番号 */
+.scene-number {
+    color: #aaa;
+    font-size: 1.15rem;
+    letter-spacing: 0.08em;
+
+    /* 本文との間に一行分の間隔を設ける */
+    margin-block-end: 1.4em !important;
 }
 
 /* =========================
@@ -393,6 +409,10 @@ body {
 
         <div class="scene-content">
 
+            <p class="scene-number">
+                一
+            </p>
+
             <p>
                 雨が静かに降っていた。
             </p>
@@ -455,6 +475,10 @@ body {
     >
 
         <div class="scene-content">
+
+            <p class="scene-number">
+                二
+            </p>
 
             <p>
                 私はゆっくりと部屋へ入った。
