@@ -688,47 +688,78 @@ voicePlayer.addEventListener("error", function() {
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
 
+function playVoice(button) {
+    const audioUrl = new URL(
+        button.dataset.audio,
+        document.baseURI
+    ).href;
+
+    stopCurrentVoice();
+    audioStatus.textContent = "";
+    currentVoiceButton = button;
+    button.classList.add("playing");
+
+    voicePlayer.src = audioUrl;
+
+    let playPromise;
+    try {
+        playPromise = voicePlayer.play();
+    } catch (error) {
+        playPromise = Promise.reject(error);
+    }
+
+    if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(function(error) {
+            if (currentVoiceButton === button) {
+                button.classList.remove("playing");
+                currentVoiceButton = null;
+            }
+
+            audioStatus.textContent = "台詞音声を再生できませんでした。";
+            console.error("台詞音声を再生できませんでした:", audioUrl, error);
+        });
+    }
+}
+
+let ignoreVoiceClickUntil = 0;
+
 voiceButtons.forEach(function(button) {
+    let touchStartPoint = null;
+
+    button.addEventListener("touchstart", function(event) {
+        const touch = event.changedTouches[0];
+        touchStartPoint = { x: touch.clientX, y: touch.clientY };
+    }, { passive: true });
+
+    /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
+    button.addEventListener("touchend", function(event) {
+        const touch = event.changedTouches[0];
+        if (!touchStartPoint) return;
+
+        const moved = Math.hypot(
+            touch.clientX - touchStartPoint.x,
+            touch.clientY - touchStartPoint.y
+        ) > 12;
+        touchStartPoint = null;
+
+        if (moved) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        ignoreVoiceClickUntil = Date.now() + 800;
+        playVoice(button);
+    }, { passive: false });
+
     button.addEventListener("click", function(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        const audioUrl = new URL(
-            button.dataset.audio,
-            document.baseURI
-        ).href;
-
-        stopCurrentVoice();
-        audioStatus.textContent = "";
-        currentVoiceButton = button;
-        button.classList.add("playing");
-
-        /*
-         * 1つのaudio要素を使い回し、ユーザーのタップ処理中に
-         * 音源設定とplay()を続けて行う。iPhone Safariで複数の
-         * 動的Audio要素を作成したときの再生失敗を避ける。
-         */
-        voicePlayer.src = audioUrl;
-
-        let playPromise;
-        try {
-            playPromise = voicePlayer.play();
-        } catch (error) {
-            playPromise = Promise.reject(error);
+        /* touchendで処理済みの合成clickは二重再生しない */
+        if (Date.now() < ignoreVoiceClickUntil) {
+            return;
         }
 
-        if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(function(error) {
-                if (currentVoiceButton === button) {
-                    button.classList.remove("playing");
-                    currentVoiceButton = null;
-                }
-
-                audioStatus.textContent =
-                    "台詞音声を再生できませんでした。";
-                console.error("台詞音声を再生できませんでした:", audioUrl, error);
-            });
-        }
+        playVoice(button);
     });
 });
 
