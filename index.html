@@ -28,6 +28,11 @@ body {
     padding: 70px 25px 120px;
 }
 
+/* 音声要素は画面に表示しない */
+.audio-only {
+    display: none;
+}
+
 /* =========================
    ページ・シーン
 ========================= */
@@ -50,6 +55,7 @@ body {
     min-height: 300px;
     overflow-x: auto;
     overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* 本文の段落間隔 */
@@ -76,7 +82,6 @@ body {
 ========================= */
 
 .title-screen .scene-content {
-    /* タイトル画面は横書きで中央に配置 */
     writing-mode: horizontal-tb;
     text-orientation: mixed;
 
@@ -170,17 +175,19 @@ body {
 ========================= */
 
 .voice {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 2px 0;
+
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 
     text-decoration: underline;
     text-decoration-color: #888;
     text-underline-offset: 6px;
 
     transition: 0.2s;
-
-    display: inline-block;
-    padding: 4px 8px;
-    margin: 2px 0;
 }
 
 .voice:hover {
@@ -202,8 +209,6 @@ body {
     align-items: center;
 
     margin-top: 50px;
-
-    /* ページ移動ボタンは横書きのまま */
     writing-mode: horizontal-tb;
     flex-shrink: 0;
 }
@@ -243,10 +248,8 @@ body {
 
 #bgmButton {
     position: fixed;
-
     top: 20px;
     right: 20px;
-
     z-index: 100;
 
     padding: 8px 14px;
@@ -274,10 +277,7 @@ body {
 @media (max-width: 600px) {
 
     .story {
-        padding:
-            70px
-            22px
-            100px;
+        padding: 70px 22px 100px;
     }
 
     .scene {
@@ -326,11 +326,26 @@ body {
 }
 
 </style>
-
 </head>
 
 
 <body>
+
+<!-- 音声要素をページ先頭に置く -->
+<audio
+    id="voiceAudio"
+    class="audio-only"
+    preload="none"
+></audio>
+
+<audio
+    id="bgmAudio"
+    class="audio-only"
+    src="bgm/scene01.mp3"
+    loop
+    preload="auto"
+></audio>
+
 
 <button id="bgmButton" type="button">
     BGMを再生
@@ -377,7 +392,6 @@ body {
 
         </div>
 
-
         <div class="navigation">
 
             <button
@@ -388,9 +402,7 @@ body {
                 ← 戻る
             </button>
 
-            <span class="page-number">
-                1 / 3
-            </span>
+            <span class="page-number">1 / 3</span>
 
             <button class="next-button" type="button">
                 次へ →
@@ -412,25 +424,16 @@ body {
 
         <div class="scene-content">
 
-            <p class="scene-number">
-                一
-            </p>
+            <p class="scene-number">一</p>
 
-            <p>
-                「ねえ、ご主人様」
-            </p>
+            <p>「ねえ、ご主人様」</p>
 
             <p class="narration">
                 休日の昼下がり。私の肩にもたれ掛かりながら、文庫本のページを捲る彼に声を掛けた。
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/01.mp3"
-                >
-                    「んー？なに？」
-                </span>
+                <span class="voice" data-audio="audio/scene01/01.mp3">「んー？なに？」</span>
             </p>
 
             <p class="narration">
@@ -442,12 +445,7 @@ body {
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/02.mp3"
-                >
-                    「どしたん？」
-                </span>
+                <span class="voice" data-audio="audio/scene01/02.mp3">「どしたん？」</span>
             </p>
 
             <p class="narration">
@@ -458,17 +456,10 @@ body {
                 ご主人様が伸ばした手に頬擦りしながら、話を切り出す。
             </p>
 
-            <p>
-                「あのね、私……ペットを飼いたくて……」
-            </p>
+            <p>「あのね、私……ペットを飼いたくて……」</p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/03.mp3"
-                >
-                    「はあ？」
-                </span>
+                <span class="voice" data-audio="audio/scene01/03.mp3">「はあ？」</span>
             </p>
 
             <p class="narration">
@@ -476,12 +467,7 @@ body {
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/04.mp3"
-                >
-                    「なんでペットがペットを飼うねん」
-                </span>
+                <span class="voice" data-audio="audio/scene01/04.mp3">「なんでペットがペットを飼うねん」</span>
             </p>
 
             <p class="narration">
@@ -493,29 +479,17 @@ body {
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/05.mp3"
-                >
-                    「あほ。暇が理由で動物飼うな。〝でもいい〞ってなんやねん、命やで。そもそも、このアパートはペット禁止や」
-                </span>
+                <span class="voice" data-audio="audio/scene01/05.mp3">「あほ。暇が理由で動物飼うな。〝でもいい〞ってなんやねん、命やで。そもそも、このアパートはペット禁止や」</span>
             </p>
 
             <p class="narration">
                 私もペットなんですけどー？って言葉が喉まで出かかったけど、我慢した。
             </p>
 
-            <p>
-                「バレないように静かに飼うもん」
-            </p>
+            <p>「バレないように静かに飼うもん」</p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/06.mp3"
-                >
-                    「そういう問題ちゃうねん。こんな狭い部屋で動物なんか飼ったら可哀想やろ」
-                </span>
+                <span class="voice" data-audio="audio/scene01/06.mp3">「そういう問題ちゃうねん。こんな狭い部屋で動物なんか飼ったら可哀想やろ」</span>
             </p>
 
             <p class="narration">
@@ -544,12 +518,7 @@ body {
 
             <p class="narration">
                 それをそのまま伝えると、
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/07.mp3"
-                >
-                    「今までどんな男と暮らしててん」
-                </span>
+                <span class="voice" data-audio="audio/scene01/07.mp3">「今までどんな男と暮らしててん」</span>
                 と、呆れたような憐れむような顔をされたのが可笑しくて、よく覚えている。
             </p>
 
@@ -561,21 +530,14 @@ body {
                 ときどき考えたりもするけれど、私の足りない頭で考えたってどうせ答えになんて辿り着けないんだからどうだっていい。毎日ご飯を食べられて、お風呂に入れて、清潔なお布団で眠れるのだから。
             </p>
 
-            <p>
-                「はいはい、わかりましたよー」
-            </p>
+            <p>「はいはい、わかりましたよー」</p>
 
             <p class="narration">
                 膝の上のご主人様の頭をえいっと押し退けて、ベッドの上にうつ伏せに寝転んだ。
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/scene01/08.mp3"
-                >
-                    「なに不貞腐れてんねん」
-                </span>
+                <span class="voice" data-audio="audio/scene01/08.mp3">「なに不貞腐れてんねん」</span>
             </p>
 
             <p class="narration">
@@ -584,16 +546,13 @@ body {
 
         </div>
 
-
         <div class="navigation">
 
             <button class="prev-button" type="button">
                 ← 戻る
             </button>
 
-            <span class="page-number">
-                2 / 3
-            </span>
+            <span class="page-number">2 / 3</span>
 
             <button class="next-button" type="button">
                 次へ →
@@ -615,21 +574,14 @@ body {
 
         <div class="scene-content">
 
-            <p class="scene-number">
-                二
-            </p>
+            <p class="scene-number">二</p>
 
             <p class="narration">
                 私はゆっくりと部屋へ入った。
             </p>
 
             <p>
-                <span
-                    class="voice"
-                    data-audio="audio/oborelo.mp3"
-                >
-                    「僕に溺れろ」
-                </span>
+                <span class="voice" data-audio="audio/oborelo.mp3">「僕に溺れろ」</span>
             </p>
 
             <p class="narration">
@@ -638,16 +590,13 @@ body {
 
         </div>
 
-
         <div class="navigation">
 
             <button class="prev-button" type="button">
                 ← 戻る
             </button>
 
-            <span class="page-number">
-                3 / 3
-            </span>
+            <span class="page-number">3 / 3</span>
 
             <button
                 class="next-button"
@@ -664,16 +613,6 @@ body {
 </div>
 
 
-<audio id="voiceAudio"></audio>
-
-<audio
-    id="bgmAudio"
-    src="bgm/scene01.mp3"
-    loop
-    preload="auto"
-></audio>
-
-
 <script>
 
 /* ==================================================
@@ -684,20 +623,71 @@ const audio = document.getElementById("voiceAudio");
 const voices = document.querySelectorAll(".voice");
 
 voices.forEach(function(voice) {
-    voice.addEventListener("click", async function() {
+    voice.addEventListener("click", function(event) {
+        event.preventDefault();
+
+        const sceneContent = voice.closest(".scene-content");
+
+        /* タップ前のページと縦書き本文のスクロール位置を記録 */
+        const pageX = window.scrollX;
+        const pageY = window.scrollY;
+        const contentScrollLeft = sceneContent
+            ? sceneContent.scrollLeft
+            : 0;
+        const contentScrollTop = sceneContent
+            ? sceneContent.scrollTop
+            : 0;
+
         voices.forEach(function(v) {
             v.classList.remove("playing");
         });
 
         voice.classList.add("playing");
+
+        /*
+           現在の音声を止めて次の音声へ切り替える。
+           play()はタップイベント内ですぐに呼び出す。
+        */
+        audio.pause();
         audio.src = voice.dataset.audio;
         audio.currentTime = 0;
 
-        try {
-            await audio.play();
-        } catch (error) {
-            console.error("セリフ音声を再生できませんでした:", error);
-            voice.classList.remove("playing");
+        const playPromise = audio.play();
+
+        /*
+           iPhone Safariが再生時に表示位置を動かした場合、
+           タップ前の位置に戻す。
+        */
+        function restoreScrollPosition() {
+            window.scrollTo({
+                left: pageX,
+                top: pageY,
+                behavior: "instant"
+            });
+
+            if (sceneContent) {
+                sceneContent.scrollLeft = contentScrollLeft;
+                sceneContent.scrollTop = contentScrollTop;
+            }
+        }
+
+        restoreScrollPosition();
+        requestAnimationFrame(restoreScrollPosition);
+        requestAnimationFrame(function() {
+            requestAnimationFrame(restoreScrollPosition);
+        });
+
+        if (playPromise !== undefined) {
+            playPromise.catch(function(error) {
+                voice.classList.remove("playing");
+                console.error(
+                    "セリフ音声を再生できませんでした:",
+                    voice.dataset.audio,
+                    error
+                );
+
+                restoreScrollPosition();
+            });
         }
     });
 });
@@ -726,10 +716,6 @@ let useWebAudio = false;
 let audioSetupAttempted = false;
 
 
-/*
-   Web Audio APIを使える環境ではゲインノードで音量を調整する。
-   file:// やAudioContext非対応環境では、通常のaudio再生を使う。
-*/
 function setupBgmAudio() {
     if (audioSetupAttempted) {
         return;
@@ -753,7 +739,6 @@ function setupBgmAudio() {
         bgmGainNode = audioContext.createGain();
 
         bgmGainNode.gain.value = BGM_VOLUME;
-
         bgmSource.connect(bgmGainNode);
         bgmGainNode.connect(audioContext.destination);
 
@@ -781,7 +766,6 @@ function updateBgmButton() {
 }
 
 
-/* play()とAudioContext.resume()をクリック操作の直後に呼び出す */
 function startBgmPlayback() {
     setupBgmAudio();
 
@@ -816,10 +800,7 @@ function startBgmPlayback() {
 }
 
 
-/* ==================================================
-   BGM再生・停止
-================================================== */
-
+/* BGM再生・停止ボタン */
 bgmButton.addEventListener("click", function() {
     if (bgmEnabled) {
         bgmEnabled = false;
@@ -890,17 +871,13 @@ function showScene(index) {
     scenes[index].classList.add("active");
     currentScene = index;
 
-    /*
-       data-bgmが設定されているページだけBGMを切り替える。
-       タイトル画面にはdata-bgmがない。
-    */
+    /* BGMが設定されているシーンだけ曲を切り替える */
     const newBgm = scenes[index].dataset.bgm;
 
     if (newBgm) {
         changeBgm(newBgm);
     }
 
-    /* ページ上部へ移動 */
     window.scrollTo({
         top: 0,
         behavior: "instant"
@@ -908,10 +885,7 @@ function showScene(index) {
 }
 
 
-/* ==================================================
-   次へ
-================================================== */
-
+/* 次へ */
 const nextButtons = document.querySelectorAll(".next-button");
 
 nextButtons.forEach(function(button) {
@@ -921,10 +895,7 @@ nextButtons.forEach(function(button) {
 });
 
 
-/* ==================================================
-   戻る
-================================================== */
-
+/* 戻る */
 const prevButtons = document.querySelectorAll(".prev-button");
 
 prevButtons.forEach(function(button) {
