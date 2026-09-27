@@ -606,15 +606,89 @@ body {
             <p class="scene-number">二</p>
 
             <p class="narration">
-                私はゆっくりと部屋へ入った。
-            </p>
-
-            <p>
-                <button class="voice" type="button" data-audio="audio/oborelo.mp3">「僕に溺れろ」</button>
+                翌日の夜。
             </p>
 
             <p class="narration">
-                私は高揚感に包まれる。
+                仕事から帰ってきたご主人様から手渡されたのは、すこし重さのある紙袋だった。
+            </p>
+
+            <p>「何？これ」</p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/01.mp3">「何って、お前が世話したいって言うたんやろ」</button>
+            </p>
+
+            <p class="narration">
+                紙袋の中を覗き込むと、両手に収まるくらいの大きさの鉢植えが入っていた。
+            </p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/02.mp3">「それが初心者向けにええらしいわ。季節関係なく花咲くし、しばらく植え替えもせんでええんやって。毎日ちゃんと水遣りしろよ」</button>
+            </p>
+
+            <p class="narration">
+                ご主人様は通勤バッグを定位置に置くと、ネクタイを緩めながら冷蔵庫を開ける。
+            </p>
+
+            <p class="narration">
+                水出し麦茶のボトルから、自分用のグラスにお茶を注いだ。
+            </p>
+
+            <p class="narration">
+                植木鉢には鮮やかな緑の葉が茂っている。
+            </p>
+
+            <p>「えっ、これ花咲くの？何色？どんな花？」</p>
+
+            <p class="narration">
+                植木鉢を抱えながらはしゃぐ私に、ご主人様は〝待て〞みたいな手で静止する。
+            </p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/03.mp3">「そこまで覚えてへんわ。まあでもすぐ咲くみたいやし、咲いてからのお楽しみやな」</button>
+            </p>
+
+            <p class="narration">
+                ご主人様は脱いだ背広をハンガーに掛けると、お茶を一口飲んでから、こちらに背を向けた。こういうとき、本当に覚えていないのか、ご主人様なりの照れ隠しなのかはいまだにわからない。それにしても、まさかペットを飼いたいと言って植物を与えられるとは思ってもなかった。
+            </p>
+
+            <p class="narration">
+                植木鉢をテーブルに置いて、ワイシャツ姿の後ろ姿にぎゅーっと抱きつく。
+            </p>
+
+            <p>「えへへ、ありがとう」</p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/04.mp3">「着替えの邪魔や。……汗臭いやろ」</button>
+            </p>
+
+            <p>「んーん。ご主人様の匂い、好き」</p>
+
+            <p class="narration">
+                あ、そう。とお茶が半分くらい残っているグラスをテーブルに置くと、私を抱き寄せる。
+            </p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/05.mp3">「夜のお散歩、行こか？」</button>
+            </p>
+
+            <p class="narration">
+                ご主人様の言う「夜のお散歩」とは、夜風を浴びてコンビニに行ったり、手を繋いで外を歩いたりすることではない。それのことは「散歩」と言う。
+            </p>
+
+            <p>「……もうお風呂入ったから、外はやだ」</p>
+
+            <p>
+                <button class="voice" type="button" data-audio="audio/scene02/06.mp3">「そんなん関係ないやろ」</button>
+            </p>
+
+            <p class="narration">
+                腕を振り解こうとすると、首輪をぐいっと引っ張られた。至近距離でご主人様と目が合う。
+            </p>
+
+            <p class="narration">
+                きっと今日は仕事で嫌なことがあった日なんだ、とわかった私は抵抗をやめた。
             </p>
 
         </div>
@@ -658,7 +732,7 @@ const voicePlayer = document.getElementById("voiceAudio");
 let currentVoiceButton = null;
 let currentVoiceScrollPosition = null;
 
-/* iPhone Safariだけに適用するフォーカス対策 */
+/* iPhone Safari向けのタッチ処理 */
 const isIPhoneSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) &&
     /Safari/.test(navigator.userAgent) &&
     !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
@@ -685,7 +759,6 @@ voicePlayer.addEventListener("ended", function() {
         currentVoiceButton = null;
     }
 
-    /* 再生終了時にSafariが画面位置を動かした場合はタップ位置へ戻す */
     restoreVoiceScrollPosition(currentVoiceScrollPosition);
     currentVoiceScrollPosition = null;
 });
@@ -791,7 +864,6 @@ voiceButtons.forEach(function(button) {
         touchStartScrollPosition = captureVoiceScrollPosition(button);
     }, { passive: true });
 
-    /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
     eventTarget.addEventListener("touchend", function(event) {
         const touch = event.changedTouches[0];
         if (!touchStartPoint) return;
@@ -818,7 +890,6 @@ voiceButtons.forEach(function(button) {
     }, { passive: true });
 
     eventTarget.addEventListener("click", function(event) {
-        /* 親要素にイベントを移した場合は台詞ボタンの領域だけを有効にする */
         if (
             isIPhoneSafari &&
             event.target !== button &&
@@ -831,14 +902,12 @@ voiceButtons.forEach(function(button) {
         event.preventDefault();
         event.stopPropagation();
 
-        /* touchendで処理済みの合成clickは二重再生しない */
-        if (Date.now() < ignoreVoiceClickUntil) {
-            return;
-        }
+        if (Date.now() < ignoreVoiceClickUntil) return;
 
         playVoice(button, captureVoiceScrollPosition(button));
     });
 });
+
 
 /* ==================================================
    BGM 音量処理
@@ -1040,13 +1109,3 @@ updateBgmButton();
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
