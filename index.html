@@ -656,6 +656,7 @@ const audioStatus = document.getElementById("audioStatus");
 const voicePlayer = document.getElementById("voiceAudio");
 
 let currentVoiceButton = null;
+let currentVoiceScrollPosition = null;
 
 function stopCurrentVoice() {
     voicePlayer.pause();
@@ -669,6 +670,8 @@ function stopCurrentVoice() {
         currentVoiceButton.classList.remove("playing");
         currentVoiceButton = null;
     }
+
+    currentVoiceScrollPosition = null;
 }
 
 voicePlayer.addEventListener("ended", function() {
@@ -676,6 +679,10 @@ voicePlayer.addEventListener("ended", function() {
         currentVoiceButton.classList.remove("playing");
         currentVoiceButton = null;
     }
+
+    /* iPhone Safariが再生終了時に画面位置を動かした場合に元へ戻す */
+    restoreVoiceScrollPosition(currentVoiceScrollPosition);
+    currentVoiceScrollPosition = null;
 });
 
 voicePlayer.addEventListener("error", function() {
@@ -684,10 +691,10 @@ voicePlayer.addEventListener("error", function() {
         currentVoiceButton = null;
     }
 
+    currentVoiceScrollPosition = null;
     audioStatus.textContent = "台詞音声を再生できませんでした。";
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
-
 function captureVoiceScrollPosition(button) {
     const sceneContent = button.closest(".scene-content");
     return {
@@ -726,6 +733,7 @@ function playVoice(button, savedScrollPosition) {
     stopCurrentVoice();
     audioStatus.textContent = "";
     currentVoiceButton = button;
+    currentVoiceScrollPosition = savedScrollPosition;
     button.classList.add("playing");
 
     voicePlayer.src = audioUrl;
@@ -743,6 +751,7 @@ function playVoice(button, savedScrollPosition) {
             if (currentVoiceButton === button) {
                 button.classList.remove("playing");
                 currentVoiceButton = null;
+                currentVoiceScrollPosition = null;
             }
 
             audioStatus.textContent = "台詞音声を再生できませんでした。";
@@ -760,8 +769,13 @@ voiceButtons.forEach(function(button) {
     button.addEventListener("touchstart", function(event) {
         const touch = event.changedTouches[0];
         touchStartPoint = { x: touch.clientX, y: touch.clientY };
+
+        /* Safariがタップしたボタンへ移動する前の画面位置を保存 */
         touchStartScrollPosition = captureVoiceScrollPosition(button);
-    }, { passive: true });
+
+        /* iPhone Safariのタッチ時フォーカスによる自動スクロールを防ぐ */
+        event.preventDefault();
+    }, { passive: false });
 
     /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
     button.addEventListener("touchend", function(event) {
@@ -998,6 +1012,10 @@ updateBgmButton();
 
 </body>
 </html>
+
+
+
+
 
 
 
