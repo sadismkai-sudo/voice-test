@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>パラダイス・ロスト</title>
 
@@ -24,7 +24,6 @@ body {
 .story {
     max-width: 680px;
     min-height: 100vh;
-    min-height: 100svh;
     margin: 0 auto;
     padding: 70px 25px 120px;
 }
@@ -48,7 +47,6 @@ body {
 .scene {
     display: none;
     min-height: calc(100vh - 190px);
-    min-height: calc(100svh - 190px);
     flex-direction: column;
 }
 
@@ -61,7 +59,6 @@ body {
     writing-mode: vertical-rl;
     text-orientation: mixed;
     height: calc(100vh - 270px);
-    height: calc(100svh - 270px);
     min-height: 300px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -101,7 +98,6 @@ body {
 
     width: 100%;
     height: calc(100vh - 270px);
-    height: calc(100svh - 270px);
     min-height: 300px;
 
     overflow: hidden;
@@ -310,18 +306,15 @@ body {
 
     .scene {
         min-height: calc(100vh - 170px);
-        min-height: calc(100svh - 170px);
     }
 
     .scene-content {
         height: calc(100vh - 240px);
-        height: calc(100svh - 240px);
         min-height: 250px;
     }
 
     .title-screen .scene-content {
         height: calc(100vh - 240px);
-        height: calc(100svh - 240px);
         min-height: 250px;
     }
 
@@ -695,7 +688,36 @@ voicePlayer.addEventListener("error", function() {
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
 
-function playVoice(button) {
+function captureVoiceScrollPosition(button) {
+    const sceneContent = button.closest(".scene-content");
+    return {
+        windowX: window.scrollX,
+        windowY: window.scrollY,
+        sceneContent: sceneContent,
+        contentScrollLeft: sceneContent ? sceneContent.scrollLeft : 0,
+        contentScrollTop: sceneContent ? sceneContent.scrollTop : 0
+    };
+}
+
+function restoreVoiceScrollPosition(position) {
+    if (!position) return;
+
+    const restore = function() {
+        window.scrollTo(position.windowX, position.windowY);
+        if (position.sceneContent && position.sceneContent.isConnected) {
+            position.sceneContent.scrollLeft = position.contentScrollLeft;
+            position.sceneContent.scrollTop = position.contentScrollTop;
+        }
+    };
+
+    requestAnimationFrame(function() {
+        restore();
+        requestAnimationFrame(restore);
+    });
+    setTimeout(restore, 100);
+}
+
+function playVoice(button, savedScrollPosition) {
     const audioUrl = new URL(
         button.dataset.audio,
         document.baseURI
@@ -707,6 +729,7 @@ function playVoice(button) {
     button.classList.add("playing");
 
     voicePlayer.src = audioUrl;
+    restoreVoiceScrollPosition(savedScrollPosition);
 
     let playPromise;
     try {
@@ -728,11 +751,49 @@ function playVoice(button) {
     }
 }
 
+let ignoreVoiceClickUntil = 0;
+
 voiceButtons.forEach(function(button) {
+    let touchStartPoint = null;
+    let touchStartScrollPosition = null;
+
+    button.addEventListener("touchstart", function(event) {
+        const touch = event.changedTouches[0];
+        touchStartPoint = { x: touch.clientX, y: touch.clientY };
+        touchStartScrollPosition = captureVoiceScrollPosition(button);
+    }, { passive: true });
+
+    /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
+    button.addEventListener("touchend", function(event) {
+        const touch = event.changedTouches[0];
+        if (!touchStartPoint) return;
+
+        const moved = Math.hypot(
+            touch.clientX - touchStartPoint.x,
+            touch.clientY - touchStartPoint.y
+        ) > 12;
+        touchStartPoint = null;
+        const savedScrollPosition = touchStartScrollPosition;
+        touchStartScrollPosition = null;
+
+        if (moved) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        ignoreVoiceClickUntil = Date.now() + 800;
+        playVoice(button, savedScrollPosition);
+    }, { passive: false });
+
     button.addEventListener("click", function(event) {
         event.preventDefault();
         event.stopPropagation();
-        playVoice(button);
+
+        /* touchendで処理済みの合成clickは二重再生しない */
+        if (Date.now() < ignoreVoiceClickUntil) {
+            return;
+        }
+
+        playVoice(button, captureVoiceScrollPosition(button));
     });
 });
 
@@ -905,7 +966,7 @@ function showScene(index) {
 
     window.scrollTo({
         top: 0,
-        behavior: "auto"
+        behavior: "instant"
     });
 }
 
