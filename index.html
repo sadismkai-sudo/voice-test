@@ -349,10 +349,6 @@ body {
     }
 }
 
-/* 音声要素をページ先頭のレイアウト・フォーカス対象から外す */
-audio {
-    display: none;
-}
 </style>
 </head>
 
@@ -775,14 +771,28 @@ voiceButtons.forEach(function(button) {
     let touchStartPoint = null;
     let touchStartScrollPosition = null;
 
-    button.addEventListener("touchstart", function(event) {
+    /* iPhone Safariではボタン自身をタッチ対象にせず、親要素で受ける */
+    const eventTarget = isIPhoneSafari ? button.parentElement : button;
+    if (isIPhoneSafari) {
+        button.style.pointerEvents = "none";
+    }
+
+    function isPointInsideButton(x, y) {
+        const rect = button.getBoundingClientRect();
+        return x >= rect.left && x <= rect.right &&
+            y >= rect.top && y <= rect.bottom;
+    }
+
+    eventTarget.addEventListener("touchstart", function(event) {
         const touch = event.changedTouches[0];
+        if (!isPointInsideButton(touch.clientX, touch.clientY)) return;
+
         touchStartPoint = { x: touch.clientX, y: touch.clientY };
         touchStartScrollPosition = captureVoiceScrollPosition(button);
     }, { passive: true });
 
     /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
-    button.addEventListener("touchend", function(event) {
+    eventTarget.addEventListener("touchend", function(event) {
         const touch = event.changedTouches[0];
         if (!touchStartPoint) return;
 
@@ -794,21 +804,30 @@ voiceButtons.forEach(function(button) {
         const savedScrollPosition = touchStartScrollPosition;
         touchStartScrollPosition = null;
 
-        if (moved) return;
+        if (moved || !isPointInsideButton(touch.clientX, touch.clientY)) return;
 
         event.preventDefault();
         event.stopPropagation();
-
-        /* iPhone Safariのボタンフォーカスを外し、フォーカス起因のスクロールを防ぐ */
-        if (isIPhoneSafari && document.activeElement === button) {
-            button.blur();
-        }
-
         ignoreVoiceClickUntil = Date.now() + 800;
         playVoice(button, savedScrollPosition);
     }, { passive: false });
 
-    button.addEventListener("click", function(event) {
+    eventTarget.addEventListener("touchcancel", function() {
+        touchStartPoint = null;
+        touchStartScrollPosition = null;
+    }, { passive: true });
+
+    eventTarget.addEventListener("click", function(event) {
+        /* 親要素にイベントを移した場合は台詞ボタンの領域だけを有効にする */
+        if (
+            isIPhoneSafari &&
+            event.target !== button &&
+            event.detail !== 0 &&
+            !isPointInsideButton(event.clientX, event.clientY)
+        ) {
+            return;
+        }
+
         event.preventDefault();
         event.stopPropagation();
 
@@ -820,7 +839,6 @@ voiceButtons.forEach(function(button) {
         playVoice(button, captureVoiceScrollPosition(button));
     });
 });
-
 
 /* ==================================================
    BGM 音量処理
@@ -1022,6 +1040,8 @@ updateBgmButton();
 
 </body>
 </html>
+
+
 
 
 
