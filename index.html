@@ -658,6 +658,11 @@ const voicePlayer = document.getElementById("voiceAudio");
 let currentVoiceButton = null;
 let currentVoiceScrollPosition = null;
 
+/* iPhone Safariだけに適用するフォーカス対策 */
+const isIPhoneSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+    /Safari/.test(navigator.userAgent) &&
+    !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
+
 function stopCurrentVoice() {
     voicePlayer.pause();
     try {
@@ -680,7 +685,7 @@ voicePlayer.addEventListener("ended", function() {
         currentVoiceButton = null;
     }
 
-    /* iPhone Safariが再生終了時に画面位置を動かした場合に元へ戻す */
+    /* 再生終了時にSafariが画面位置を動かした場合はタップ位置へ戻す */
     restoreVoiceScrollPosition(currentVoiceScrollPosition);
     currentVoiceScrollPosition = null;
 });
@@ -691,10 +696,10 @@ voicePlayer.addEventListener("error", function() {
         currentVoiceButton = null;
     }
 
-    currentVoiceScrollPosition = null;
     audioStatus.textContent = "台詞音声を再生できませんでした。";
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
+
 function captureVoiceScrollPosition(button) {
     const sceneContent = button.closest(".scene-content");
     return {
@@ -769,13 +774,8 @@ voiceButtons.forEach(function(button) {
     button.addEventListener("touchstart", function(event) {
         const touch = event.changedTouches[0];
         touchStartPoint = { x: touch.clientX, y: touch.clientY };
-
-        /* Safariがタップしたボタンへ移動する前の画面位置を保存 */
         touchStartScrollPosition = captureVoiceScrollPosition(button);
-
-        /* iPhone Safariのタッチ時フォーカスによる自動スクロールを防ぐ */
-        event.preventDefault();
-    }, { passive: false });
+    }, { passive: true });
 
     /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
     button.addEventListener("touchend", function(event) {
@@ -794,6 +794,12 @@ voiceButtons.forEach(function(button) {
 
         event.preventDefault();
         event.stopPropagation();
+
+        /* iPhone Safariのボタンフォーカスを外し、フォーカス起因のスクロールを防ぐ */
+        if (isIPhoneSafari && document.activeElement === button) {
+            button.blur();
+        }
+
         ignoreVoiceClickUntil = Date.now() + 800;
         playVoice(button, savedScrollPosition);
     }, { passive: false });
@@ -1012,8 +1018,6 @@ updateBgmButton();
 
 </body>
 </html>
-
-
 
 
 
