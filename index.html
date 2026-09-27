@@ -688,36 +688,7 @@ voicePlayer.addEventListener("error", function() {
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
 
-function captureVoiceScrollPosition(button) {
-    const sceneContent = button.closest(".scene-content");
-    return {
-        windowX: window.scrollX,
-        windowY: window.scrollY,
-        sceneContent: sceneContent,
-        contentScrollLeft: sceneContent ? sceneContent.scrollLeft : 0,
-        contentScrollTop: sceneContent ? sceneContent.scrollTop : 0
-    };
-}
-
-function restoreVoiceScrollPosition(position) {
-    if (!position) return;
-
-    const restore = function() {
-        window.scrollTo(position.windowX, position.windowY);
-        if (position.sceneContent && position.sceneContent.isConnected) {
-            position.sceneContent.scrollLeft = position.contentScrollLeft;
-            position.sceneContent.scrollTop = position.contentScrollTop;
-        }
-    };
-
-    requestAnimationFrame(function() {
-        restore();
-        requestAnimationFrame(restore);
-    });
-    setTimeout(restore, 100);
-}
-
-function playVoice(button, savedScrollPosition) {
+function playVoice(button) {
     const audioUrl = new URL(
         button.dataset.audio,
         document.baseURI
@@ -729,7 +700,6 @@ function playVoice(button, savedScrollPosition) {
     button.classList.add("playing");
 
     voicePlayer.src = audioUrl;
-    restoreVoiceScrollPosition(savedScrollPosition);
 
     let playPromise;
     try {
@@ -751,49 +721,11 @@ function playVoice(button, savedScrollPosition) {
     }
 }
 
-let ignoreVoiceClickUntil = 0;
-
 voiceButtons.forEach(function(button) {
-    let touchStartPoint = null;
-    let touchStartScrollPosition = null;
-
-    button.addEventListener("touchstart", function(event) {
-        const touch = event.changedTouches[0];
-        touchStartPoint = { x: touch.clientX, y: touch.clientY };
-        touchStartScrollPosition = captureVoiceScrollPosition(button);
-    }, { passive: true });
-
-    /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
-    button.addEventListener("touchend", function(event) {
-        const touch = event.changedTouches[0];
-        if (!touchStartPoint) return;
-
-        const moved = Math.hypot(
-            touch.clientX - touchStartPoint.x,
-            touch.clientY - touchStartPoint.y
-        ) > 12;
-        touchStartPoint = null;
-        const savedScrollPosition = touchStartScrollPosition;
-        touchStartScrollPosition = null;
-
-        if (moved) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-        ignoreVoiceClickUntil = Date.now() + 800;
-        playVoice(button, savedScrollPosition);
-    }, { passive: false });
-
     button.addEventListener("click", function(event) {
         event.preventDefault();
         event.stopPropagation();
-
-        /* touchendで処理済みの合成clickは二重再生しない */
-        if (Date.now() < ignoreVoiceClickUntil) {
-            return;
-        }
-
-        playVoice(button, captureVoiceScrollPosition(button));
+        playVoice(button);
     });
 });
 
