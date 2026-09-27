@@ -760,13 +760,8 @@ voiceButtons.forEach(function(button) {
     button.addEventListener("touchstart", function(event) {
         const touch = event.changedTouches[0];
         touchStartPoint = { x: touch.clientX, y: touch.clientY };
-
-        /* Safariがタップしたボタンへ自動スクロールする前に位置を保存 */
         touchStartScrollPosition = captureVoiceScrollPosition(button);
-
-        /* iPhone Safariのタッチ時フォーカスによる自動スクロールを防ぐ */
-        event.preventDefault();
-    }, { passive: false });
+    }, { passive: true });
 
     /* iPhone Safariでclickが発生しないタップもtouchendで拾う */
     button.addEventListener("touchend", function(event) {
@@ -1003,7 +998,6 @@ updateBgmButton();
 
 </body>
 </html>
-
 
 
 
