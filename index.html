@@ -268,6 +268,38 @@ body {
 }
 
 /* =========================
+   ページ移動セレクター
+========================= */
+
+#pageJump {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: #f4eff8;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+#pageJump select {
+    padding: 8px 10px;
+
+    background: rgba(35, 25, 46, 0.95);
+    color: #f4eff8;
+
+    border: 1px solid #594966;
+    border-radius: 4px;
+
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* =========================
    BGMボタン
 ========================= */
 
@@ -345,6 +377,16 @@ body {
         padding: 11px 16px;
     }
 
+    #pageJump {
+        top: 12px;
+        left: 12px;
+        font-size: 12px;
+    }
+
+    #pageJump select {
+        padding: 7px 8px;
+    }
+
     #bgmButton {
         top: 12px;
         right: 12px;
@@ -382,6 +424,15 @@ body {
 <button id="bgmButton" type="button">
     BGMを再生
 </button>
+
+<div id="pageJump">
+    <label for="pageJumpSelect">ページ移動</label>
+    <select id="pageJumpSelect">
+        <option value="0">1 / タイトル</option>
+        <option value="1">2 / シーン一</option>
+        <option value="2">3 / シーン二</option>
+    </select>
+</div>
 
 
 <div class="story">
@@ -1055,6 +1106,7 @@ function changeBgm(newBgm) {
 ================================================== */
 
 const scenes = document.querySelectorAll(".scene");
+const pageJumpSelect = document.getElementById("pageJumpSelect");
 let currentScene = 0;
 
 
@@ -1071,6 +1123,7 @@ function showScene(index) {
 
     scenes[index].classList.add("active");
     currentScene = index;
+    pageJumpSelect.value = String(index);
 
     const newBgm = scenes[index].dataset.bgm;
 
@@ -1105,6 +1158,10 @@ prevButtons.forEach(function(button) {
 });
 
 
+pageJumpSelect.addEventListener("change", function() {
+    showScene(Number(pageJumpSelect.value));
+});
+
 /* 初期状態のボタン表示 */
 updateBgmButton();
 
@@ -1112,16 +1169,3 @@ updateBgmButton();
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
