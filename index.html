@@ -733,7 +733,6 @@ const audioStatus = document.getElementById("audioStatus");
 const voicePlayer = document.getElementById("voiceAudio");
 
 let currentVoiceButton = null;
-let currentVoiceScrollPosition = null;
 
 /* iPhone Safari向けのタッチ処理 */
 const isIPhoneSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) &&
@@ -752,8 +751,6 @@ function stopCurrentVoice() {
         currentVoiceButton.classList.remove("playing");
         currentVoiceButton = null;
     }
-
-    currentVoiceScrollPosition = null;
 }
 
 voicePlayer.addEventListener("ended", function() {
@@ -761,9 +758,6 @@ voicePlayer.addEventListener("ended", function() {
         currentVoiceButton.classList.remove("playing");
         currentVoiceButton = null;
     }
-
-    restoreVoiceScrollPosition(currentVoiceScrollPosition);
-    currentVoiceScrollPosition = null;
 });
 
 voicePlayer.addEventListener("error", function() {
@@ -776,36 +770,7 @@ voicePlayer.addEventListener("error", function() {
     console.error("音声再生エラー:", voicePlayer.currentSrc, voicePlayer.error);
 });
 
-function captureVoiceScrollPosition(button) {
-    const sceneContent = button.closest(".scene-content");
-    return {
-        windowX: window.scrollX,
-        windowY: window.scrollY,
-        sceneContent: sceneContent,
-        contentScrollLeft: sceneContent ? sceneContent.scrollLeft : 0,
-        contentScrollTop: sceneContent ? sceneContent.scrollTop : 0
-    };
-}
-
-function restoreVoiceScrollPosition(position) {
-    if (!position) return;
-
-    const restore = function() {
-        window.scrollTo(position.windowX, position.windowY);
-        if (position.sceneContent && position.sceneContent.isConnected) {
-            position.sceneContent.scrollLeft = position.contentScrollLeft;
-            position.sceneContent.scrollTop = position.contentScrollTop;
-        }
-    };
-
-    requestAnimationFrame(function() {
-        restore();
-        requestAnimationFrame(restore);
-    });
-    setTimeout(restore, 100);
-}
-
-function playVoice(button, savedScrollPosition) {
+function playVoice(button) {
     const audioUrl = new URL(
         button.dataset.audio,
         document.baseURI
@@ -814,11 +779,9 @@ function playVoice(button, savedScrollPosition) {
     stopCurrentVoice();
     audioStatus.textContent = "";
     currentVoiceButton = button;
-    currentVoiceScrollPosition = savedScrollPosition;
     button.classList.add("playing");
 
     voicePlayer.src = audioUrl;
-    restoreVoiceScrollPosition(savedScrollPosition);
 
     let playPromise;
     try {
@@ -832,7 +795,6 @@ function playVoice(button, savedScrollPosition) {
             if (currentVoiceButton === button) {
                 button.classList.remove("playing");
                 currentVoiceButton = null;
-                currentVoiceScrollPosition = null;
             }
 
             audioStatus.textContent = "台詞音声を再生できませんでした。";
@@ -845,7 +807,6 @@ let ignoreVoiceClickUntil = 0;
 
 voiceButtons.forEach(function(button) {
     let touchStartPoint = null;
-    let touchStartScrollPosition = null;
 
     /* iPhone Safariではボタン自身をタッチ対象にせず、親要素で受ける */
     const eventTarget = isIPhoneSafari ? button.parentElement : button;
@@ -864,7 +825,6 @@ voiceButtons.forEach(function(button) {
         if (!isPointInsideButton(touch.clientX, touch.clientY)) return;
 
         touchStartPoint = { x: touch.clientX, y: touch.clientY };
-        touchStartScrollPosition = captureVoiceScrollPosition(button);
     }, { passive: true });
 
     eventTarget.addEventListener("touchend", function(event) {
@@ -876,20 +836,17 @@ voiceButtons.forEach(function(button) {
             touch.clientY - touchStartPoint.y
         ) > 12;
         touchStartPoint = null;
-        const savedScrollPosition = touchStartScrollPosition;
-        touchStartScrollPosition = null;
 
         if (moved || !isPointInsideButton(touch.clientX, touch.clientY)) return;
 
         event.preventDefault();
         event.stopPropagation();
         ignoreVoiceClickUntil = Date.now() + 800;
-        playVoice(button, savedScrollPosition);
+        playVoice(button);
     }, { passive: false });
 
     eventTarget.addEventListener("touchcancel", function() {
         touchStartPoint = null;
-        touchStartScrollPosition = null;
     }, { passive: true });
 
     eventTarget.addEventListener("click", function(event) {
@@ -907,7 +864,7 @@ voiceButtons.forEach(function(button) {
 
         if (Date.now() < ignoreVoiceClickUntil) return;
 
-        playVoice(button, captureVoiceScrollPosition(button));
+        playVoice(button);
     });
 });
 
@@ -1112,14 +1069,3 @@ updateBgmButton();
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
