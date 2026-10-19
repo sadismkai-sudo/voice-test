@@ -1403,7 +1403,7 @@ function stopCurrentVoice() {
     }
 
     if (currentVoiceButton) {
-        //currentVoiceButton.classList.remove("playing");
+        currentVoiceButton.classList.remove("playing");
         currentVoiceButton = null;
     }
 
@@ -1416,6 +1416,7 @@ voicePlayer.addEventListener("ended", function() {
         currentVoiceButton = null;
     }
 
+    restoreVoiceScrollPosition(currentVoiceScrollPosition);
     currentVoiceScrollPosition = null;
 });
 
@@ -1771,6 +1772,8 @@ updateBgmButton();
 
 </body>
 </html>
+
+
 
 
 
